@@ -1,0 +1,12 @@
+factAnalyzers:
+  default: [ApacheCXFFactAnalyzer, ApacheWinkFactAnalyzer, GuiceServletFactAnalyzer,
+            HttpServletFactAnalyzer, JerseyFactAnalyzer, RESTEasyFactAnalyzer, RestletFactAnalyzer,
+            SpringBeanFactAnalyzer,
+            SpringMVCAnnotationFactAnalyzer, StrutsConfigXmlFactAnalyzer,
+            StrutsXmlFactAnalyzer, WSDDFactAnalyzer, WSDLFactAnalyzer, WebXmlFactAnalyzer, SOAPUnionFactAnalyzer,
+            UnionWebServiceFactAnalyzer, UnionStrutsActionFactAnalyzer]
+outPutDirectory: ./output
+tempDirectory: ./output
+reportType: html
+
+#  UnionFactAnalyzer

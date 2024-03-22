@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://cdn.staticfile.org/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <meta charset="UTF-8">
+<!--    <title>{{project.name| title}}</title>-->
+    <title>RouteCheck</title>
+</head>
+
+<style>
+    .container {
+        width: 100%; /* 设置容器的宽度，你可以根据需要调整 */
+        margin: 0 auto; /* 居中容器 */
+    }
+
+    table {
+        width: 100%; /* 设置表格的宽度为容器的宽度 */
+        border-collapse: collapse;
+    }
+
+    th, td {
+        padding: 8px; /* 设置内边距 */
+        text-align: left; /* 文本左对齐 */
+    }
+
+    td {
+        width: 20%; /* 设置单元格的宽度，你可以根据需要调整 */
+        max-width: 200px; /* 设置单元格的最大宽度，避免内容溢出 */
+        word-wrap: break-word; /* 如果单元格内容过长，自动换行 */
+    }
+
+    /* 设置第三个 td 元素占比小一点 */
+    td:nth-child(3),
+    td:nth-child(4) {
+        width: 15%; /* 设置第三个 td 元素的宽度为 10%，你可以根据需要调整 */
+    }
+</style>
+<body>
+
+<div class="container">
+    <h1></h1>
+    <p>Date: {{date}}</p>
+
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>Routes</th>
+        <th>ClassName</th>
+        <th>Method</th>
+        <th>Description</th>
+        <th>FactName</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    {% set prevProjectName = None %}
+    {% for entry in projects.getAllProjectsAndFactChains() %}
+    {% for fact in entry.getValue() %}
+    {% set currentProjectName = entry.getKey().getName() %}
+    {% if prevProjectName != currentProjectName %}
+    <tr>
+        <td colspan="4">ProjectName: {{ currentProjectName }}</td>
+    </tr>
+    {% set prevProjectName = currentProjectName %}
+    {% endif %}
+    <tr>
+        <td>{{ fact.getRoutes() | join(', ') }}</td>
+        <td>{{ fact.getClassName() }}</td>
+        <td>{{ fact.getMethod() }}</td>
+        <td>{{ fact.getDescription() }}</td>
+        <td>{{ fact.getFactName() }}</td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+    </tbody>
+
+
+
+</table>
+</div>
+</body>
+</html>
