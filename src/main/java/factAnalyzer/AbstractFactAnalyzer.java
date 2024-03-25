@@ -1,7 +1,12 @@
 package factAnalyzer;
 
+import entry.Fact;
 import entry.Settings;
+import entry.StrutsAction;
+import exceptions.FactAnalyzerException;
 import project.entry.Project;
+
+import java.util.Collection;
 
 
 public abstract class AbstractFactAnalyzer implements FactAnalyzer {
@@ -18,6 +23,11 @@ public abstract class AbstractFactAnalyzer implements FactAnalyzer {
         this.name = name;
         this.type = type;
         this.description = description;
+    }
+
+    @Override
+    public void analysis(Object object, Collection<Fact> factChain, Collection<StrutsAction> actionChain) throws FactAnalyzerException {
+        this.analysis(object,factChain);
     }
 
     @Override
@@ -62,4 +72,5 @@ public abstract class AbstractFactAnalyzer implements FactAnalyzer {
     public String toString() {
         return getName() + "\n" + getFactDescription();
     }
+
 }

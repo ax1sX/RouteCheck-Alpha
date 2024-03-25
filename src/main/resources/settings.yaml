@@ -4,9 +4,9 @@ factAnalyzers:
             SpringBeanFactAnalyzer,
             SpringMVCAnnotationFactAnalyzer, StrutsConfigXmlFactAnalyzer,
             StrutsXmlFactAnalyzer, WSDDFactAnalyzer, WSDLFactAnalyzer, WebXmlFactAnalyzer, SOAPUnionFactAnalyzer,
-            UnionWebServiceFactAnalyzer, UnionStrutsActionFactAnalyzer]
+            UnionWebServiceFactAnalyzer, StrutsActionFactAnalyzer]
 outPutDirectory: ./output
 tempDirectory: ./output
-reportType: html
+reportType: all
 
 #  UnionFactAnalyzer

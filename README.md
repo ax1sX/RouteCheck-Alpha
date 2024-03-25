@@ -7,6 +7,7 @@
 ![示例图片](./img/img.png)
 
 
+
 ```text
 .______        ______    __    __  .___________. _______   ______  __    __   _______   ______  __  ___ 
 |   _  \      /  __  \  |  |  |  | |           ||   ____| /      ||  |  |  | |   ____| /      ||  |/  / 
@@ -25,3 +26,8 @@ usage: java -jar RouteCheck.jar [-cp <arg>] [-h] [-lp <arg>] [-o <arg>] [-pn
  -pp,--project-path <arg>   项目路径
  -sp,--setting-path <arg>   设置文件地址
 ```
+Default Usage
+```text
+ java -jar RouteCheck.jar -pp /Users/axisx/Download/project
+```
+Only `-pp` parameter is mandatory, All other parameters are optional. If `-lp` or `-cp` parameter is not specified, RouteCheck will automatically extract it from the project.

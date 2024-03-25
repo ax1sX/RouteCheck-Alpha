@@ -1,7 +1,7 @@
 import annotations.FactAnalyzerAnnotations;
+import entry.StrutsAction;
 import exceptions.*;
 import factAnalyzer.FactAnalyzer;
-import org.apache.commons.cli.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import project.BaseProjectAnalyzer;
@@ -11,7 +11,6 @@ import project.entry.Projects;
 import reporting.ReportGenerator;
 import reporting.ReporterFactory;
 import soot.SootClass;
-import soot.Unit;
 import utils.Command;
 import utils.CoreClassLoader;
 import entry.Settings;
@@ -34,6 +33,7 @@ public class Engine {
     private Command command = new Command();
 
     private Collection<Fact> factChain = new ArrayList<>();
+    private Collection<StrutsAction> actionChain = new ArrayList<>();
     private BaseProjectAnalyzer baseProjectAnalyzer = new BaseProjectAnalyzer();
 
     private Project project;
@@ -103,12 +103,16 @@ public class Engine {
         initFact();
         for (Project project : projectSet) {
             factChain.clear();
+            actionChain.clear();
             baseProjectAnalyzer.initialize(command, settings, project);
             baseProjectAnalyzer.analysis(project);
             evaluateFact(project);
             List<Fact> newFactChain = new ArrayList<>();
             newFactChain.addAll(factChain);
             projects.addFactChain(project, (List<Fact>) newFactChain);
+            List<StrutsAction> newActionChain = new ArrayList<>();
+            newActionChain.addAll(actionChain);
+            projects.addActionChain(project,newActionChain);
         }
     }
 
@@ -252,7 +256,12 @@ public class Engine {
                         fa.prepare(sootClass);
                         if (fa.isEnable()) {
                             LOGGER.info("Class FactAnalyzer");
-                            fa.analysis(sootClass, factChain);
+                            if (fa.getName().equals("factAnalyzer.StrutsActionFactAnalyzer")){
+                                fa.analysis(sootClass, factChain, actionChain);
+                            }else {
+                                fa.analysis(sootClass,factChain);
+                            }
+
                             LOGGER.info(sootClass.getName() + ": " + fa.getName() + " Done");
                         }
                     } catch (Exception e) {
@@ -285,10 +294,21 @@ public class Engine {
     protected void writeReport() throws ReportingException {
         LOGGER.info("Starting Write Report");
         String type = settings.getReportType();
-        ReportGenerator reportGenerator = ReporterFactory.getReportGenerator(type);
-        reportGenerator.initialize(projects,settings);
-//        reportGenerator.initialize(project, factChain, settings);
-        reportGenerator.write();
+        Map<String, ReportGenerator> reportGeneratorMap = ReporterFactory.getReportGenerator(type);
+        ReportGenerator reportGenerator = null;
+        if (!type.equals("all")){
+            reportGenerator = reportGeneratorMap.get(type);
+            reportGenerator.initialize(projects,settings);
+            reportGenerator.write();
+        }else {
+            for (Map.Entry<String, ReportGenerator> entry : reportGeneratorMap.entrySet()) {
+                ReportGenerator value = entry.getValue();
+                value.initialize(projects,settings);
+                value.write();
+            }
+
+        }
+
         LOGGER.info("Write Report Done");
     }
 

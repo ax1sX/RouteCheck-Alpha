@@ -56,6 +56,11 @@ public class ApacheCXFFactAnalyzer extends JAXRSFactAnalyzer{
      * 			<ref bean="GisBitmapServices"/>
      * 		</jaxws:serviceBean>
      * 	</jaxws:server>
+     *
+     * 	另外，有的配置在applicationContext.xml中的可能用的是<jaxws:endpoint>标签
+     * 		<bean id="itcBulletinServiceImpl" class="com.dahua.dssc.webservice.itcBulletin.ItcBulletinServiceImpl" />
+     * 	<jaxws:endpoint id="itcBulletinService" implementor="#itcBulletinServiceImpl"
+     * 		address="/itcBulletin" />
      */
     @Override
     public void analysis(Object object, Collection<Fact> factChain) throws FactAnalyzerException {
@@ -95,6 +100,12 @@ public class ApacheCXFFactAnalyzer extends JAXRSFactAnalyzer{
                     if (refBean != null & className != null) {
                         beanMap.put(refBean, className);
                     }
+                } else if (child.getQualifiedName().equals("jaxws:endpoint")) {
+                    String address = child.getAttributeValue("address");
+                    // # 符号在Spring配置文件中用于引用Spring容器中的bean，这种配置方式允许在XML配置文件中直接引用Spring创建的Bean
+                    String refBean = child.getAttributeValue("implementor");
+                    refBean = refBean.replace("#", "");
+                    addressMap.put(refBean, address);
                 }
             });
             if (addressMap.size() > 0 && beanMap.size() > 0) {

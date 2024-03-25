@@ -72,11 +72,11 @@ public class Command {
         CommandLineParser parser = new BasicParser();
         Options options = new Options();
         options.addOption("h", "help", false, "打印命令行帮助信息");
-        options.addOption("pn", "project-name", false, "项目名称"); // 改为false
-        options.addOption("pp", "project-path", true, "项目路径"); // 以项目根路径为主！
-        options.addOption("cp", "class-path", true, "类文件地址");
-        options.addOption("lp", "lib-path", true, "库文件地址");
-        options.addOption("sp", "setting-path", false, "设置配置文件地址"); // 改为false
+        options.addOption("pn", "project-name", false, "项目名称");
+        options.addOption("pp", "project-path", true, "项目路径"); // 必选项，项目根路径
+        options.addOption("cp", "class-path", false, "类文件地址");
+        options.addOption("lp", "lib-path", false, "库文件地址");
+        options.addOption("sp", "setting-path", false, "设置配置文件地址");
         options.addOption("o", "outPut", false, "结果保存目录"); // 改为false，和settings保持一致
 
         CommandLine commandLine = parser.parse(options, args);

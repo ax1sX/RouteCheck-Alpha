@@ -21,25 +21,25 @@ public class UnionWebServiceFactAnalyzer extends AbstractFactAnalyzer{
 
     @Override
     public void analysis(Object object, Collection<Fact> factChain) throws FactAnalyzerException {
-        Map<String, String> Rootdict = new HashMap<>(); // 存放路由和类名
-        Map<String, String> Apidict = new HashMap<>();
+        Map<String, Fact> Rootdict = new HashMap<>(); // 存放路由和类名
+        Map<String, Fact> Apidict = new HashMap<>();
 
         // TODO：ClassName中存在\n和空格，导致需要replace
         for (Fact fact : factChain) {
             if (Objects.equals(fact.getClassName().trim().replace("\\s",""), "org.apache.cxf.transport.servlet.CXFServlet")){
-                Rootdict.put(fact.getRoutes().toString(),fact.getClassName());
+                Rootdict.put(fact.getRoutes().toString(),fact);
 
             }else if (Objects.equals(fact.getFactName().trim().replace("\\s",""), "factAnalyzer.ApacheCXFFactAnalyzer")){
-                Apidict.put(fact.getRoutes().toString(),fact.getClassName());
+                Apidict.put(fact.getRoutes().toString(),fact);
             }
         }
         if (!Rootdict.isEmpty()) {
             if (!Apidict.isEmpty()){
-                for (Map.Entry<String, String> Rootentry : Rootdict.entrySet()) {
-                    for (Map.Entry<String, String> Apientry :  Apidict.entrySet()) {
+                for (Map.Entry<String, Fact> Rootentry : Rootdict.entrySet()) {
+                    for (Map.Entry<String, Fact> Apientry :  Apidict.entrySet()) {
                         // 将路由、类名分别拼接起来
                         String combinedRoute = combinePaths(Rootentry.getKey(), Apientry.getKey());
-                        String combinedClass = Rootentry.getValue().trim() + "&" + Apientry.getValue().trim();
+                        String combinedClass = Rootentry.getValue().getClassName().trim() + "&" + Apientry.getValue().getClassName().trim();
                         Fact fact = new Fact();
                         fact.setRoute(combinedRoute);
                         fact.setClassName(combinedClass);
@@ -48,6 +48,7 @@ public class UnionWebServiceFactAnalyzer extends AbstractFactAnalyzer{
                         fact.setMethod("—");
                         fact.setFactName(getName());
                         factChain.add(fact);
+                        factChain.remove(Apientry.getValue()); // 既然要合并，把这个ApacheCXFFactAnalyzer的Fact从FactChain中删除
                     }
                 }
 

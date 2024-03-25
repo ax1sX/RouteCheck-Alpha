@@ -1,6 +1,7 @@
 package project.entry;
 
 import entry.Fact;
+import entry.StrutsAction;
 
 import java.util.*;
 
@@ -10,13 +11,17 @@ import java.util.Map;
 
 public class Projects {
     private Map<Project, List<Fact>> projectFactMap;
+    private Map<Project, List<StrutsAction>> projectActionMap;
 
     public Projects() {
+        // 需要初始化，否则调用属性相关方法时会报错 NullPointerException
         projectFactMap = new HashMap<>();
+        projectActionMap = new HashMap<>();
     }
 
     public void addProject(Project project) {
-        projectFactMap.put(project, null); // 初始化为 null
+        projectFactMap.put(project, null);
+        projectActionMap.put(project, null);
     }
 
     public void addFactChain(Project project, List<Fact> factChain) {
@@ -39,7 +44,15 @@ public class Projects {
         return projectFactMap.entrySet();
     }
 
-    public static void main(String[] args) {
+    public void addActionChain(Project project, List<StrutsAction> actionChain) {
+        projectActionMap.put(project, actionChain);
+    }
 
+    public Set<Map.Entry<Project, List<StrutsAction>>> getAllActionChains() {
+        return projectActionMap.entrySet();
+    }
+
+    public List<StrutsAction> getActionChain(Project project) {
+        return projectActionMap.get(project);
     }
 }

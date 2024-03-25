@@ -2,8 +2,8 @@ package factAnalyzer;
 
 import annotations.FactAnalyzerAnnotations;
 import entry.Fact;
+import entry.StrutsAction;
 import exceptions.FactAnalyzerException;
-import org.jdom.Element;
 import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
@@ -12,22 +12,28 @@ import soot.tagkit.*;
 import java.util.*;
 
 @FactAnalyzerAnnotations(
-        name = "UnionStrutsActionFactAnalyzer"
+        name = "StrutsActionFactAnalyzer"
 )
-public class UnionStrutsActionFactAnalyzer extends AbstractFactAnalyzer{
+
+public class StrutsActionFactAnalyzer extends AbstractFactAnalyzer{
     static Map<String, List<String>> ActionMethods = new HashMap<>();
     private final String PATTERN = "Lorg/springframework/stereotype/Controller;";
 
-    public UnionStrutsActionFactAnalyzer(String name, String type, String description) {
+    public StrutsActionFactAnalyzer(String name, String type, String description) {
         super(name, type, description);
     }
 
-    public UnionStrutsActionFactAnalyzer(){
-        super(UnionStrutsActionFactAnalyzer.class.getName(), "class", "");
+    public StrutsActionFactAnalyzer(){
+        super(StrutsActionFactAnalyzer.class.getName(), "class", "");
     }
 
     @Override
     public void analysis(Object object, Collection<Fact> factChain) throws FactAnalyzerException {
+        // 空着
+    }
+
+    @Override
+    public void analysis(Object object, Collection<Fact> factChain, Collection<StrutsAction> actionChain) throws FactAnalyzerException {
 //        ActionMethods.clear();
         SootClass sootClass = (SootClass) object;
         VisibilityAnnotationTag visibilityAnnotationTag = (VisibilityAnnotationTag) sootClass.getTag("VisibilityAnnotationTag");
@@ -51,11 +57,14 @@ public class UnionStrutsActionFactAnalyzer extends AbstractFactAnalyzer{
                                         fact.setRoute("-");
                                         fact.setDescription("提取出Struts2相关Action");
                                         fact.setCredibility(3);
-                                        /*考虑到这个doget dopost之类的这些方法解析不到，就默认设置了do*，没有把这个字段设置为空*/
-                                        // TODO: 这里不应该设置成do*
                                         fact.setMethod(TargetMethods.toString());
                                         fact.setFactName(getName());
                                         factChain.add(fact);
+                                        // 增加StrutsAction，便于后续和StrutsXmlFactAnalyzer做乘积
+                                        StrutsAction strutsAction = new StrutsAction();
+                                        strutsAction.setActionName(value);
+                                        strutsAction.setActionMethod(TargetMethods);
+                                        actionChain.add(strutsAction);
                                     }
                                 }
                             }
@@ -98,21 +107,6 @@ public class UnionStrutsActionFactAnalyzer extends AbstractFactAnalyzer{
                 continue;
             }
 
-//            boolean isExcludeMethod = false;
-//            for (String clm : ClassMethods) {
-//                if (method.getName().equalsIgnoreCase(clm)) {
-//                    isExcludeMethod = true;
-//                    break;
-//                }
-//                if (method.getName().equals("init")){
-//                    isExcludeMethod=true;
-//                    break;
-//                }
-//                if (method.getName().equals("<init>")){
-//                    isExcludeMethod=true;
-//                    break;
-//                }
-//            }
             boolean isExcludeMethod = ClassMethods.stream()
                     .anyMatch(clm -> method.getName().equalsIgnoreCase(clm) || method.getName().equals("init") || method.getName().equals("<init>"));
 
