@@ -53,9 +53,12 @@ public class WSDLFactAnalyzer extends SOAPFactAnalyzer{
                             greatGrandSon.forEach(ggs -> {
                                 if(ggs.getName().equals("address")){
                                     Fact fact = new Fact();
-                                    fact.setRoute( ggs.getAttributeValue("location"));
+                                    fact.setRoute(ggs.getAttributeValue("location"));
+                                    fact.setClassName("—");
+                                    fact.setMethod("—");
                                     fact.setCredibility(3);
                                     fact.setDescription(String.format("从%s文件中提取", config.getFilePath()));
+                                    fact.setFactName(getName());
                                     factChain.add(fact);
                                 }
                             });

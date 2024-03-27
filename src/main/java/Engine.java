@@ -79,17 +79,21 @@ public class Engine {
         projects = new Projects();
         LOGGER.info("Analysis Folders");
         baseProjectAnalyzer.initialize(command, settings, project);
+        int count = 0;
         List<String> targetFolders = baseProjectAnalyzer.analysisSubModule();
-        if( targetFolders != null) {
+        if( targetFolders != null && !targetFolders.isEmpty()) {
             for (String tf : targetFolders) {
                 Project project =new Project();
                 project.setName(command.getProjectPath()+"/"+tf); // 默认只扫源码的第一层目录结构
                 projects.addProject(project);
+                count = count + 1;
             }
+            projects.setProjectCount(count);
         }else {
             Project project =new Project();
             project.setName(command.getProjectPath());
             projects.addProject(project);
+            projects.setProjectCount(1);
         }
     }
 
@@ -276,7 +280,7 @@ public class Engine {
             for (FactAnalyzer ufa : unionFactAnalyzer) {
                 try {
                     LOGGER.info("Union FactAnalyzer");
-                    ufa.analysis(null, factChain);
+                    ufa.analysis(null, factChain); // 如果此时的factChain为空，analysis会抛出异常java.lang.NullPointerException
                 } catch (Exception ex) {
                     ex.printStackTrace();
                     LOGGER.error(String.format("When execute %s occur error", ufa.getName()));
@@ -289,7 +293,38 @@ public class Engine {
     }
 
     /**
-     * Seventh Step, Write Report
+     * Seventh Step, Scan jsp Files
+     */
+    protected void scanJsp() throws ReportingException {
+        LOGGER.info("Starting Scan Jsp");
+        String ProjectPath = command.getProjectPath();
+        List<String> jspFiles = findJSPFiles(ProjectPath, ProjectPath);
+        projects.setJSPPaths(jspFiles);
+        LOGGER.info("Scan Jsp Done");
+    }
+
+    public static List<String> findJSPFiles(String folderPath,String rootFolderPath) {
+        List<String> jspFiles = new ArrayList<>();
+        File folder = new File(folderPath);
+        File[] files = folder.listFiles();
+
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile() && file.getName().toLowerCase().endsWith(".jsp")) {
+                    // 计算相对路径
+                    String relativePath = file.getAbsolutePath().substring(rootFolderPath.length());
+                    jspFiles.add(relativePath);
+                } else if (file.isDirectory()) {
+                    jspFiles.addAll(findJSPFiles(file.getAbsolutePath(), rootFolderPath));
+                }
+            }
+        }
+
+        return jspFiles;
+    }
+
+    /**
+     * Eighth Step, Write Report
      */
     protected void writeReport() throws ReportingException {
         LOGGER.info("Starting Write Report");
@@ -329,6 +364,7 @@ public class Engine {
             analysisProject();
 //            factAnalyzers = loadFactAnalyzer();
 //            evaluateFact();
+            scanJsp();
             writeReport();
         } catch (Exception e) {
             e.printStackTrace();

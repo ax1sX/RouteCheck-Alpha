@@ -52,23 +52,3 @@ public class HtmlReportGenerator extends AbstractReportGenerator{
 
     }
 }
-
-// report.html测试代码
-//        Set<Map.Entry<Project, List<Fact>>> projectEntries = projects.getAllProjectsAndFactChains();
-//        String prevProjectName = null;
-//        for (Map.Entry<Project, List<Fact>> entry : projectEntries) {
-//            Project project = entry.getKey();
-//            List<Fact> facts = entry.getValue();
-//            if (!Objects.equals(prevProjectName, project.getName())) {
-//                System.out.println(project.getName());
-//                prevProjectName=project.getName();
-//            }
-//            System.out.println(project.getName());
-//            for (Fact fact : facts) {
-//                System.out.println(" - Routes: " + fact.getRoutes());
-//                System.out.println(" - Class Name: " + fact.getClassName());
-//                System.out.println(" - Method: " + fact.getMethod());
-//                System.out.println(" - Description: " + fact.getDescription());
-//                System.out.println(" - Fact Name: " + fact.getFactName());
-//            }
-//        }

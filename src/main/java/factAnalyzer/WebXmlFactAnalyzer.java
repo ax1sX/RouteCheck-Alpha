@@ -18,13 +18,13 @@ import java.util.*;
         name = "WebXmlFactAnalyzer"
 )
 
-/*
-https://docs.oracle.com/cd/E13222_01/wls/docs81/webapp/web_xml.html
-*/
 public class WebXmlFactAnalyzer extends AbstractFactAnalyzer {
 
     static Map<String, Element> servlets = new HashMap<>();
     static Map<String, Set<Element>> servletMappings = new HashMap<>();
+    static Map<String, Element> filters = new HashMap<>();
+    static Map<String, Set<Element>> filterMappings = new HashMap<>();
+
 
     public WebXmlFactAnalyzer() {
         super(WebXmlFactAnalyzer.class.getName(), "config", "");
@@ -59,54 +59,87 @@ public class WebXmlFactAnalyzer extends AbstractFactAnalyzer {
         try {
             servlets.clear();
             servletMappings.clear();
+            filters.clear();
+            filterMappings.clear();
+
             Config config = (Config) object;
             String filePath = config.getFilePath();
-            // TODO: 解析web.xml
+
             SAXBuilder saxBuilder = new SAXBuilder();
             saxBuilder.setEntityResolver(new NoOpEntityResolver());
             InputStream is = new FileInputStream(new File(filePath));
             Document document = saxBuilder.build(is);
             Element rootElement = document.getRootElement();
-            List<Element> children = rootElement.getChildren();
-            children.forEach(child ->{
-                if(child.getName().equals("servlet")){
-                    String servletName = child.getChildText("servlet-name", child.getNamespace());
-                    servlets.put(servletName, child);
-                }else if(child.getName().equals("servlet-mapping")){
-                    String servletName = child.getChildText("servlet-name", child.getNamespace());
-                    Set<Element> values = servletMappings.getOrDefault(servletName, new HashSet<Element>());
-                    values.add(child);
-                    servletMappings.put(servletName, values);
+
+            for (Object childObj : rootElement.getChildren()) {
+                if (childObj instanceof Element) {
+                    Element child = (Element) childObj;
+                    String childName = child.getName();
+                    switch (childName) {
+                        case "servlet":
+                            processServlet(child);
+                            break;
+                        case "servlet-mapping":
+                            processServletMapping(child);
+                            break;
+                        case "filter":
+                            processFilter(child);
+                            break;
+                        case "filter-mapping":
+                            processFilterMapping(child);
+                            break;
+                        default:
+                            // Handle other cases if needed
+                    }
                 }
-            });
-            if (servlets.size() > 0 && servletMappings.size() > 0) {
-                servlets.forEach((name, servlet) -> {
-                    Set<Element> servletMapping = servletMappings.getOrDefault(name, new HashSet<>());
-                    servletMapping.forEach(sm ->{
-                        Fact fact = new Fact();
-                        String servletClass = servlet.getChildText("servlet-class", servlet.getNamespace());
-                        fact.setClassName(servletClass);
-                        fact.setRoute(sm.getChildText("url-pattern", sm.getNamespace()));
-                        fact.setDescription(String.format("从文件%s中提取出servlet和servlet-mapping", config.getFilePath()));
-                        fact.setCredibility(3);
-                        /*考虑到这个doget dopost之类的这些方法解析不到，就默认设置了do*，没有把这个字段设置为空*/
-                        // TODO: 这里不应该设置成do*
-                        fact.setMethod("do*");
-                        fact.setFactName(getName());
-                        factChain.add(fact);
-                    });
-                });
             }
+            processElements(servlets, servletMappings, "从文件%s中提取出servlet和servlet-mapping", "servlet-class", factChain, config);
+            processElements(filters, filterMappings, "从文件%s中提取出filter和filter-mapping", "filter-class", factChain, config);
+
+
         } catch (Exception e) {
             throw new FactAnalyzerException(e.getMessage());
         }
     }
 
-    public static void main(String[] args) throws Exception {
-        // TODO: 解析web.xml
-        SAXBuilder saxBuilder = new SAXBuilder(false);
-        InputStream is = new FileInputStream(new File("C:\\Users\\ss\\Desktop\\test\\web.xml"));
-        Document document = saxBuilder.build(is);
-        Element rootElement = document.getRootElement();
+    private void processServlet(Element servlet) {
+        String servletName = servlet.getChildText("servlet-name", servlet.getNamespace());
+        servlets.put(servletName, servlet);
+    }
+
+    private void processServletMapping(Element servletMapping) {
+        String servletName = servletMapping.getChildText("servlet-name", servletMapping.getNamespace());
+        Set<Element> values = servletMappings.computeIfAbsent(servletName, k -> new HashSet<>());
+        values.add(servletMapping);
+    }
+
+    private void processFilter(Element filter) {
+        String filterName = filter.getChildText("filter-name", filter.getNamespace());
+        filters.put(filterName, filter);
+    }
+
+    private void processFilterMapping(Element filterMapping) {
+        String filterName = filterMapping.getChildText("filter-name", filterMapping.getNamespace());
+        Set<Element> values = filterMappings.computeIfAbsent(filterName, k -> new HashSet<>());
+        values.add(filterMapping);
+    }
+
+    private void processElements(Map<String, Element> elements, Map<String, Set<Element>> mappings, String descriptionTemplate, String classNameKey, Collection<Fact> factChain, Config config) {
+        if (elements.isEmpty() || mappings.isEmpty()) return;
+
+        elements.forEach((name, element) -> {
+            Set<Element> elementMappings = mappings.getOrDefault(name, new HashSet<>());
+            elementMappings.forEach(mapping -> {
+                Fact fact = new Fact();
+                String className = element.getChildText(classNameKey, element.getNamespace());
+                fact.setClassName(className);
+                fact.setRoute(mapping.getChildText("url-pattern", mapping.getNamespace()));
+                fact.setDescription(String.format(descriptionTemplate, config.getFilePath()));
+                fact.setCredibility(3);
+                fact.setMethod("—");
+                fact.setFactName(getName());
+                factChain.add(fact);
+            });
+        });
     }
 }

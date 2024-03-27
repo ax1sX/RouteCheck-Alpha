@@ -3,6 +3,8 @@ package factAnalyzer;
 import annotations.FactAnalyzerAnnotations;
 import entry.Fact;
 import exceptions.FactAnalyzerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -10,6 +12,7 @@ import java.util.*;
         name = "UnionWebServiceFactAnalyzer"
 )
 public class UnionWebServiceFactAnalyzer extends AbstractFactAnalyzer{
+    private static final Logger LOGGER = LoggerFactory.getLogger(UnionWebServiceFactAnalyzer.class);
     public UnionWebServiceFactAnalyzer(String name, String type, String description) {
         super(name, type, description);
     }
@@ -26,12 +29,18 @@ public class UnionWebServiceFactAnalyzer extends AbstractFactAnalyzer{
 
         // TODO：ClassName中存在\n和空格，导致需要replace
         for (Fact fact : factChain) {
-            if (Objects.equals(fact.getClassName().trim().replace("\\s",""), "org.apache.cxf.transport.servlet.CXFServlet")){
-                Rootdict.put(fact.getRoutes().toString(),fact);
-
-            }else if (Objects.equals(fact.getFactName().trim().replace("\\s",""), "factAnalyzer.ApacheCXFFactAnalyzer")){
-                Apidict.put(fact.getRoutes().toString(),fact);
+            try{
+                String className = fact.getClassName();
+                String factName = fact.getFactName();
+                if (className != null && Objects.equals(className.trim().replace("\\s", ""), "org.apache.cxf.transport.servlet.CXFServlet")) {
+                    Rootdict.put(fact.getRoutes().toString(), fact);
+                } else if (factName != null && Objects.equals(factName.trim().replace("\\s", ""), "factAnalyzer.ApacheCXFFactAnalyzer")) {
+                    Apidict.put(fact.getRoutes().toString(), fact);
+                }
+            }catch (Exception e){
+                LOGGER.info(e.getMessage());
             }
+
         }
         if (!Rootdict.isEmpty()) {
             if (!Apidict.isEmpty()){

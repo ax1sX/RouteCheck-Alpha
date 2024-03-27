@@ -6,6 +6,8 @@ import exceptions.FactAnalyzerException;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import project.entry.Config;
 import utils.Utils;
 
@@ -18,6 +20,7 @@ import java.util.*;
         name = "StrutsXmlFactAnalyzer"
 )
 public class StrutsXmlFactAnalyzer extends AbstractFactAnalyzer{
+    private static final Logger LOGGER = LoggerFactory.getLogger(StrutsXmlFactAnalyzer.class);
 
     static Map<String, Element> actionMap = new HashMap<>();
 
@@ -25,6 +28,23 @@ public class StrutsXmlFactAnalyzer extends AbstractFactAnalyzer{
         super(StrutsXmlFactAnalyzer.class.getName(), "config", "");
     }
 
+
+    /**
+     *     此方法解析的是package标签下，默认解析action标签的name、class、method属性。三种常见形式
+     *     <package name="emap-findcar-package" extends="emap-default" namespace="/gis/ibuilding/page/queryMachine">
+     *         <action name="*_*" class="{1}Action" method="{2}">
+     *             <result name="j_{1}_{2}" type="json">
+     *                 <param name="root">returnMessage</param>
+     *             </result>
+     *         </action>
+     *     </package>
+     *
+     *     <action name="dishConfig">
+     *          <result>/modules/ccs/dishConfig.jsp</result>
+     *      </action>
+     *
+     *      <action name="ccsAction!*" class="ccsShareAction" method="{1}"></action>
+     */
     @Override
     public void analysis(Object object, Collection<Fact> factChain) throws FactAnalyzerException {
         try {
@@ -44,31 +64,32 @@ public class StrutsXmlFactAnalyzer extends AbstractFactAnalyzer{
                     // 有些package标签只配置interceptor、global-results等，不存在action。这种往往没有namespace属性
                     if (nameSpace == null){return;}
                     actions.forEach(action -> {
-                        try {
-                            String actionName = action.getAttributeValue("name");
-                            actionMap.put(actionName, action);
-                            /**
-                             * 处理特例 namespace="/", action name="*_*"
-                             */
-                            if (actionName != null && !nameSpace.equals("/")) {
-                                actionName = "/" + actionName;
+                        if (action.getName().equals("action")){
+                            try {
+                                String actionName = action.getAttributeValue("name");
+                                actionMap.put(actionName, action);
+                                /**
+                                 * 处理特例 namespace="/", action name="*_*"
+                                 */
+                                if (actionName != null && !nameSpace.equals("/")) {
+                                    actionName = "/" + actionName;
+                                }
+                                String route = nameSpace + actionName + ".action";
+                                String clazz = action.getAttributeValue("class");
+                                String method = action.getAttributeValue("method");
+                                Fact fact = new Fact();
+                                fact.setMethod(method);
+                                fact.setClassName(clazz);
+                                fact.setRoute(route);
+                                fact.setDescription(String.format("从%s中发现%s", config.getFilePath(),
+                                        action));
+                                fact.setCredibility(3);
+                                fact.setFactName(getName());
+                                factChain.add(fact);
+                            }catch (Exception e){
+                                LOGGER.info(e.getMessage());
                             }
-                            String route = nameSpace + actionName + ".action";
-                            String clazz = action.getAttributeValue("class");
-                            String method = action.getAttributeValue("method");
-                            Fact fact = new Fact();
-                            fact.setMethod(method);
-                            fact.setClassName(clazz);
-                            fact.setRoute(route);
-                            fact.setDescription(String.format("从%s中发现%s", config.getFilePath(),
-                                    action));
-                            fact.setCredibility(3);
-                            fact.setFactName(getName());
-                            factChain.add(fact);
-                        }catch (Exception e){
-
                         }
-
                     });
                 }
             });

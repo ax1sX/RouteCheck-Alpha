@@ -72,7 +72,8 @@ public class BaseProjectAnalyzer {
             Options.v().set_include_all(true); // 包含所有的类
             Options.v().set_ignore_resolving_levels(true);
             classFilePaths.clear(); //清空classFilePath，不然scanClass会把之前子项目的也计算一遍
-            scanClass(new File(classPath));
+//            scanClass(new File(classPath));
+            scanClass(new File(classPath+"/WEB-INF/classes/"));
             Scene.v().setPhantomRefs(true);
             Scene.v().setSootClassPath(sootClassPath);
             Scene.v().loadNecessaryClasses();

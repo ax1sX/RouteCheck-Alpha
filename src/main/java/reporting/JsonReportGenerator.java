@@ -4,8 +4,11 @@ import entry.Fact;
 import entry.Settings;
 import entry.StrutsAction;
 import exceptions.ReportingException;
+import factAnalyzer.UnionWebServiceFactAnalyzer;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import project.entry.Project;
 import project.entry.Projects;
 import utils.Utils;
@@ -16,6 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class JsonReportGenerator extends AbstractReportGenerator{
+    private static final Logger LOGGER = LoggerFactory.getLogger(JsonReportGenerator.class);
 
     @Override
     public void initialize(Projects projects, Settings settings) {
@@ -39,7 +43,6 @@ public class JsonReportGenerator extends AbstractReportGenerator{
             String extractedName = null;
             // 如果是projects添加根路由，如果是单项目不加根路由
             Set<Map.Entry<Project, List<Fact>>> projectsChain = this.projects.getAllProjectsAndFactChains();
-//            Set<Map.Entry<Project, List<StrutsAction>>> actionsChain = this.projects.getAllActionChains();
             JSONArray projectsArray = new JSONArray();
 
             for (Map.Entry<Project, List<Fact>> entry : projectsChain) {
@@ -52,57 +55,70 @@ public class JsonReportGenerator extends AbstractReportGenerator{
                     extractedName = projectName.substring(lastSlashIndex + 1);
                     extractedName = "/" + extractedName; // 在项目根目录前加上/
                 }
+                if (this.projects.getProjectCount() == 1){
+                    extractedName = "";
+                }
+
                 List<Fact> factChain = entry.getValue();
                 for (Fact fact : factChain) {
                     if (!Objects.equals(prevProjectName, projectName)){
-//                        String routes = fact.getRoutes().toString();
-                        String routes = String.join("", fact.getRoutes());
-                        String className = fact.getClassName();
-                        String methodName = fact.getMethod();
+                        try{
+                            String routes = String.join("", fact.getRoutes());
+                            String className = fact.getClassName();
+                            String methodName = fact.getMethod();
 
-                        if (fact.getFactName().equals("factAnalyzer.StrutsXmlFactAnalyzer")){
-                            /**
-                             * 1. 如果格式为：/carQuery/*_*.action	{1}Action	{2}， 遍历actions
-                             * 2. 如果格式为：/portal/portal_*.action	portalAction	{1} 找到actions中这个action对应的路由
-                             */
-                            if (className.contains("{1}")){
-                                if (methodName.contains("{2}")){
+                            if (fact.getFactName().equals("factAnalyzer.StrutsXmlFactAnalyzer")){
+                                /**
+                                 * 1. 如果格式为：/carQuery/*_*.action	{1}Action	{2}， 遍历actions
+                                 * 2. 如果格式为：/portal/portal_*.action	portalAction	{1} 找到actions中这个action对应的路由
+                                 * 3. 如果格式为：ccsAction!* ccsShareAction {1} 同2
+                                 */
+                                if (className != null && className.contains("{1}")){
+                                    if (methodName != null &&methodName.contains("{2}")){
+                                        for (StrutsAction action: actions){
+                                            String acName = action.getActionName();
+                                            int index = acName.lastIndexOf("Action");
+                                            if (index != -1) {
+                                                acName = acName.substring(0, index); // 截取Action前的内容
+                                            }
+                                            List<String> acMethods = action.getActionMethod();
+                                            for (String method: acMethods){
+                                                String replacedRoute = routes.replaceFirst("\\*", acName).replaceFirst("\\*", method);
+//                                            String replacedRoute = routes.replace("*", acName).replace("*", method);
+                                                Routes.add(extractedName + replacedRoute);
+                                            }
+                                        }
+                                    }
+                                } else if (methodName !=null && methodName.contains("{1}")) {
                                     for (StrutsAction action: actions){
                                         String acName = action.getActionName();
-                                        int index = acName.lastIndexOf("Action");
-                                        if (index != -1) {
-                                            acName = acName.substring(0, index); // 截取Action前的内容
-                                        }
-                                        List<String> acMethods = action.getActionMethod();
-                                        for (String method: acMethods){
-                                            String replacedRoute = routes.replaceFirst("\\*", acName).replaceFirst("\\*", method);
-//                                            String replacedRoute = routes.replace("*", acName).replace("*", method);
-                                            Routes.add(extractedName + replacedRoute);
-                                        }
-                                    }
-                                }
-                            } else if (methodName.contains("{1}")) {
-                                for (StrutsAction action: actions){
-                                    String acName = action.getActionName();
-                                    if (acName.equals(className)){
-                                        List<String> acMethods = action.getActionMethod();
-                                        for (String method: acMethods){
-                                            String replacedRoute2 = routes.replace("*", method);
-                                            Routes.add(extractedName + replacedRoute2);
-                                        }
-                                    }
+                                        int lastIndex = acName.lastIndexOf('.');
+                                        acName = lastIndex != -1 ? acName.substring(lastIndex + 1) : acName;
 
+                                        if (acName.equals(className)){
+
+                                            List<String> acMethods = action.getActionMethod();
+                                            for (String method: acMethods){
+                                                String replacedRoute2 = routes.replace("*", method);
+                                                Routes.add(extractedName + replacedRoute2);
+                                            }
+                                        }
+
+                                    }
+                                }else { // 不包含{},直接提取路由
+                                    Routes.add(routes);
                                 }
-                            }else { // 不包含{},直接提取路由
-                                Routes.add(routes);
+
+                            } else if (fact.getFactName().equals("factAnalyzer.StrutsActionFactAnalyzer")) {
+                                // UnionStrutsActionFactAnalyzer的结果不遍历，这是用于html的
+                                continue;
+                            }else {
+                                Routes.add(extractedName + routes);
                             }
-
-                        } else if (fact.getFactName().equals("factAnalyzer.StrutsActionFactAnalyzer")) {
-                            // UnionStrutsActionFactAnalyzer的结果不遍历，这是用于html的
-                            continue;
-                        }else {
-                            Routes.add(extractedName + routes);
+                        }catch (Exception e){
+                            LOGGER.info(e.getMessage());
                         }
+
 
                     }
                 }
@@ -115,28 +131,21 @@ public class JsonReportGenerator extends AbstractReportGenerator{
                 json.put("Routes", routesArray);
 
             }
-            /**
-             * {
-             *     "project": "xxx",
-             *     "Routes": [],
-             * }
-             *
-             */
 
+            List<String> jspPaths = this.projects.getJSPPaths();
+            if (jspPaths != null && !jspPaths.isEmpty()) {
+                JSONArray jspPathsArray = new JSONArray();
+                for (String path : jspPaths) {
+                    jspPathsArray.put(path);
+                }
+                json.put("jspPaths", jspPathsArray);
+            }
 
-//            context.put("project", this.project.getName());
-//            List<Map> facts = new ArrayList<>();
-//            this.factChain.forEach(fact -> {
-//                facts.add(Utils.objectToMap(fact));
-//            });
-//            context.put("facts", facts);
-//            context.put("date", dataStr);
-//            JSONObject jsonObject = new JSONObject(context);
             String jsonString = json.toString(4);
             jsonString = jsonString.replace("\\/", "/");
             Utils.fileWriter(filePath, jsonString);
         }catch (Exception e){
-            throw new ReportingException("");
+            LOGGER.info(e.getMessage());
         }
     }
 }

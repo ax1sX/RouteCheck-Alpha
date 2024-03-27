@@ -74,6 +74,17 @@
     </tr>
     {% endfor %}
     {% endfor %}
+
+    {% if projects.getJSPPaths() %}
+    <tr>
+        <td colspan="5" style="width: 100%; font-size: 16px; font-weight: bold; padding-top: 10px; padding-bottom: 10px;">JSP Paths</td>
+    </tr>
+    {% for jspPath in projects.getJSPPaths() %}
+    <tr>
+        <td colspan="5" style="width: 100%;">{{ jspPath }}</td>
+    </tr>
+    {% endfor %}
+    {% endif %}
     </tbody>
 
 
