@@ -4,10 +4,6 @@
 
 # Usage
 
-![示例图片](./img/img.png)
-
-
-
 ```text
 .______        ______    __    __  .___________. _______   ______  __    __   _______   ______  __  ___ 
 |   _  \      /  __  \  |  |  |  | |           ||   ____| /      ||  |  |  | |   ____| /      ||  |/  / 
@@ -31,3 +27,13 @@ Default Usage
  java -jar RouteCheck.jar -pp /Users/axisx/Download/project
 ```
 Only `-pp` parameter is mandatory, All other parameters are optional. If `-lp` or `-cp` parameter is not specified, RouteCheck will automatically extract it from the project.
+
+
+RouteCheck supports two output formats: HTML and JSON.
+
+HTML
+![html示例图片](./img/img.png)
+
+JSON
+![json示例图片](./img/json.png)
+
