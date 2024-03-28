@@ -49,8 +49,6 @@ public class BaseProjectAnalyzer {
         jarFilePaths.clear();
         libs.clear();
         scanJars(new File(projectPath));
-
-        // analysisClasses应该也只对子项目对扫描
         analysisClasses(projectPath);
     }
 
@@ -88,7 +86,6 @@ public class BaseProjectAnalyzer {
                 int startIndex = clp.indexOf("/WEB-INF/classes/");
                 if (startIndex != -1) {
                     int length = "/WEB-INF/classes".length();
-//                    String extractedPath = clp.substring(startIndex + "/WEB-INF/classes/".length());
                     this.tempClassPathLength = startIndex + length;
                 }else{
                     this.tempClassPathLength = clp.length();
@@ -265,13 +262,11 @@ public class BaseProjectAnalyzer {
         if (files != null) {
             for (File file : files) {
                 if (file.isDirectory() && file.getName().equalsIgnoreCase("WEB-INF")) {
-                    // 如果包含名为 WEB-INF 的文件夹，继续判断其中是否包含 web.xml 文件
                     return containsWebXml(file);
                 }
             }
         }
 
-        // 没有找到名为 WEB-INF 的文件夹，或者找到了但是其中不包含 web.xml 文件
         return false;
     }
 
@@ -280,13 +275,11 @@ public class BaseProjectAnalyzer {
         if (files != null) {
             for (File file : files) {
                 if (file.isFile() && file.getName().equalsIgnoreCase("web.xml")) {
-                    // 如果 WEB-INF 文件夹下包含名为 web.xml 的文件，返回 true
                     return true;
                 }
             }
         }
 
-        // 没有找到名为 web.xml 的文件
         return false;
     }
 }

@@ -62,7 +62,9 @@ public class StrutsXmlFactAnalyzer extends AbstractFactAnalyzer{
                     List<Element> actions = pg.getChildren();
                     String nameSpace = pg.getAttributeValue("namespace");
                     // 有些package标签只配置interceptor、global-results等，不存在action。这种往往没有namespace属性
-                    if (nameSpace == null){return;}
+                    // 有些package标签没有namespace属性，则包为默认空间
+                    if (nameSpace == null){nameSpace = "";}
+                    String finalNameSpace = nameSpace;
                     actions.forEach(action -> {
                         if (action.getName().equals("action")){
                             try {
@@ -71,10 +73,10 @@ public class StrutsXmlFactAnalyzer extends AbstractFactAnalyzer{
                                 /**
                                  * 处理特例 namespace="/", action name="*_*"
                                  */
-                                if (actionName != null && !nameSpace.equals("/")) {
+                                if (actionName != null && !finalNameSpace.equals("/")) {
                                     actionName = "/" + actionName;
                                 }
-                                String route = nameSpace + actionName + ".action";
+                                String route = finalNameSpace + actionName + ".action";
                                 String clazz = action.getAttributeValue("class");
                                 String method = action.getAttributeValue("method");
                                 Fact fact = new Fact();
@@ -122,31 +124,5 @@ public class StrutsXmlFactAnalyzer extends AbstractFactAnalyzer{
             }
         }
 
-    }
-
-    public static void main(String[] args) throws Exception {
-        SAXBuilder saxBuilder = new SAXBuilder();
-        InputStream is = new FileInputStream(new File("D:\\工作\\专项工具\\RouteCheck\\config\\struts2.xml"));
-        Document document = saxBuilder.build(is);
-        Element rootElement = document.getRootElement();
-        List<Element> packages = rootElement.getChildren();
-        packages.forEach(pg ->{
-            if(pg.getName().equals("package")){
-                List<Element> actions = pg.getChildren();
-                String nameSpace = pg.getAttributeValue("namespace");
-                actions.forEach(action -> {
-                    String actionName = action.getAttributeValue("name");
-                    String route = nameSpace + actionName + ".action";
-                    String clazz = action.getAttributeValue("class");
-                    if(clazz == null){
-                        clazz = "ActionSupport";
-                    }
-                    String method = action.getAttributeValue("method");
-
-
-
-                });
-            }
-        });
     }
 }

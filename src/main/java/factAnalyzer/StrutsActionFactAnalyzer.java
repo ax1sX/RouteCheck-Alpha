@@ -29,9 +29,7 @@ public class StrutsActionFactAnalyzer extends AbstractFactAnalyzer{
     }
 
     @Override
-    public void analysis(Object object, Collection<Fact> factChain) throws FactAnalyzerException {
-        // 空着
-    }
+    public void analysis(Object object, Collection<Fact> factChain) throws FactAnalyzerException {}
 
     @Override
     public void analysis(Object object, Collection<Fact> factChain, Collection<StrutsAction> actionChain) throws FactAnalyzerException {
@@ -55,7 +53,7 @@ public class StrutsActionFactAnalyzer extends AbstractFactAnalyzer{
             try {
                 if (tmpClass.getName().equals(targetSuperclass)) {
                     // getName: com.hikvision.cms.modules.ops.point.action.OpsPointAction; getShortName: OpsPointAction
-                    extractFactAndAction(sootClass.getShortName(), sootClass, factChain, actionChain);
+                    extractFactAndAction(sootClass.getName(), sootClass, factChain, actionChain);
                     break;
                 }
                 tmpClass = tmpClass.getSuperclass();
@@ -113,7 +111,6 @@ public class StrutsActionFactAnalyzer extends AbstractFactAnalyzer{
         int lastIndex = className.lastIndexOf(".");
         if (lastIndex != -1 && lastIndex < className.length() - 1) {
             String suffix = className.substring(lastIndex + 1);
-            // 判断截取的字符串是否包含 "Action" 字段
             if (suffix.endsWith("Action")) {
                 this.setEnable(true);
             }else {
@@ -150,79 +147,4 @@ public class StrutsActionFactAnalyzer extends AbstractFactAnalyzer{
         }
         return TargetMethods;
     }
-
-    //    @Override
-//    public void analysis(Object object, Collection<Fact> factChain, Collection<StrutsAction> actionChain) throws FactAnalyzerException {
-//        SootClass sootClass = (SootClass) object;
-//        VisibilityAnnotationTag visibilityAnnotationTag = (VisibilityAnnotationTag) sootClass.getTag("VisibilityAnnotationTag");
-//        if(visibilityAnnotationTag == null){
-//            SootClass tmpClass = sootClass;
-//            String targetSuperclass = "com.opensymphony.xwork2.ActionSupport";
-//            while(!tmpClass.getName().equals("java.lang.Object") ) {
-//                try {
-//                    if (tmpClass.getName().equals(targetSuperclass)) {
-//                        List<String> TargetMethods = GetPublicMethods(sootClass);
-//                        Fact fact = new Fact();
-//                        fact.setClassName(sootClass.getName());
-//                        fact.setRoute("-");
-//                        fact.setDescription("提取出Struts2相关Action");
-//                        fact.setCredibility(3);
-//                        fact.setMethod(TargetMethods.toString());
-//                        fact.setFactName(getName());
-//                        factChain.add(fact);
-//                        // 增加StrutsAction，便于后续和StrutsXmlFactAnalyzer做乘积
-//                        StrutsAction strutsAction = new StrutsAction();
-//                        strutsAction.setActionName(sootClass.getName());
-//                        strutsAction.setActionMethod(TargetMethods);
-//                        actionChain.add(strutsAction);
-//                    }
-//                    tmpClass = tmpClass.getSuperclass();
-//                } catch (Exception var5) {
-//                    return;
-//                }
-//            }
-//        }else {
-//            String sootClassVisibilityAnnotationTagString = visibilityAnnotationTag.toString();
-//            if(sootClassVisibilityAnnotationTagString.contains(PATTERN)){
-//                for (Tag tag : sootClass.getTags()) {
-//                    if (tag instanceof VisibilityAnnotationTag) {
-//                        ArrayList<AnnotationTag> annotations= visibilityAnnotationTag.getAnnotations();
-//                        for(AnnotationTag annotationTag: annotations){
-//                            if (annotationTag.getType().equals("Lorg/springframework/stereotype/Controller;")){
-//                                Collection<AnnotationElem> elems= annotationTag.getElems();
-//                                String className = null;
-//                                // 用于解析类注解@Controller("xxAction") 如果只是@Controller，则elems.isEmpty()为空
-//                                if (!elems.isEmpty()){ //
-//                                    for (AnnotationElem elem : elems) {
-//                                        if (elem instanceof AnnotationStringElem){
-//                                            String value = ((AnnotationStringElem) elem).getValue(); // Action名称
-//                                            if (value != null && value.contains("Action")) { // 如果是struts的Action类
-//                                                className = value;
-//                                            }
-//                                        }
-//                                    }
-//                                }else { //如果只是@Controller, 获取Action的类名，而不是获取@Controller中的命名
-//                                    className = sootClass.getName();
-//                                }
-//                                List<String> TargetMethods = GetPublicMethods(sootClass);
-//                                Fact fact = new Fact();
-//                                fact.setClassName(className);
-//                                fact.setRoute("-");
-//                                fact.setDescription("提取出Struts2相关Action");
-//                                fact.setCredibility(3);
-//                                fact.setMethod(TargetMethods.toString());
-//                                fact.setFactName(getName());
-//                                factChain.add(fact);
-//                                // 增加StrutsAction，便于后续和StrutsXmlFactAnalyzer做乘积
-//                                StrutsAction strutsAction = new StrutsAction();
-//                                strutsAction.setActionName(className);
-//                                strutsAction.setActionMethod(TargetMethods);
-//                                actionChain.add(strutsAction);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
 }

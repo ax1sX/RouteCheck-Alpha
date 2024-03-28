@@ -92,11 +92,7 @@ public class JsonReportGenerator extends AbstractReportGenerator{
                                 } else if (methodName !=null && methodName.contains("{1}")) {
                                     for (StrutsAction action: actions){
                                         String acName = action.getActionName();
-                                        int lastIndex = acName.lastIndexOf('.');
-                                        acName = lastIndex != -1 ? acName.substring(lastIndex + 1) : acName;
-
-                                        if (acName.equals(className)){
-
+                                        if (getSimpleName(acName).equals(getSimpleName(className))){
                                             List<String> acMethods = action.getActionMethod();
                                             for (String method: acMethods){
                                                 String replacedRoute2 = routes.replace("*", method);
@@ -110,7 +106,7 @@ public class JsonReportGenerator extends AbstractReportGenerator{
                                 }
 
                             } else if (fact.getFactName().equals("factAnalyzer.StrutsActionFactAnalyzer")) {
-                                // UnionStrutsActionFactAnalyzer的结果不遍历，这是用于html的
+                                // StrutsActionFactAnalyzer的结果不遍历，这是用于html的
                                 continue;
                             }else {
                                 Routes.add(extractedName + routes);
@@ -146,6 +142,15 @@ public class JsonReportGenerator extends AbstractReportGenerator{
             Utils.fileWriter(filePath, jsonString);
         }catch (Exception e){
             LOGGER.info(e.getMessage());
+        }
+    }
+
+    public static String getSimpleName(String className) {
+        int lastDotIndex = className.lastIndexOf('.');
+        if (lastDotIndex != -1) {
+            return className.substring(lastDotIndex + 1);
+        } else {
+            return className; // 如果没有`.`，则返回原始className
         }
     }
 }

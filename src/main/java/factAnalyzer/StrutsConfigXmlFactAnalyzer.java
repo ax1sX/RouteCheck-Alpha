@@ -47,8 +47,8 @@ public class StrutsConfigXmlFactAnalyzer extends AbstractFactAnalyzer {
                             String formBeanType = formBean.getAttributeValue("type");
                             fact.setRoute(formBeanName);
                             fact.setClassName(formBeanType);
-                            fact.setCredibility(2);
-                            fact.setDescription(String.format("从%s文件中发现%s", "", formBean.toString()));
+                            fact.setCredibility(3);
+                            fact.setDescription(String.format("从文件%s中发现%s", config.getFilePath(), formBean.toString()));
                             fact.setFactName(getName());
                             factChain.add(fact);
                         } catch (Exception ex) {
@@ -60,13 +60,12 @@ public class StrutsConfigXmlFactAnalyzer extends AbstractFactAnalyzer {
                     actions.forEach(action -> {
                         try {
                             Fact fact = new Fact();
-                            String path = action.getAttributeValue("action");
+                            String path = action.getAttributeValue("path");
                             String actionType = action.getAttributeValue("type");
                             fact.setRoute(path);
                             fact.setClassName(actionType);
-                            fact.setClassName(Utils.getMD5Str(actionType));
-                            fact.setCredibility(2);
-                            fact.setDescription(String.format("从%s文件中发现%s", "", action.toString()));
+                            fact.setCredibility(3);
+                            fact.setDescription(String.format("从文件%s中发现%s", config.getFilePath(), action.toString()));
                             fact.setFactName(getName());
                             factChain.add(fact);
                         } catch (Exception ex) {
@@ -102,43 +101,5 @@ public class StrutsConfigXmlFactAnalyzer extends AbstractFactAnalyzer {
 
             }
         }
-    }
-
-    public static void main(String[] args) throws Exception {
-        // TODO: 解析struts-config.xml
-        SAXBuilder saxBuilder = new SAXBuilder();
-        saxBuilder.setEntityResolver(new NoOpEntityResolver());
-        InputStream is = new FileInputStream(new File("D:\\工作\\专项工具\\RouteCheck\\config\\struts-config.xml"));
-        Document document = saxBuilder.build(is);
-        Element rootElement = document.getRootElement();
-        List<Element> children = rootElement.getChildren();
-        children.forEach(child -> {
-            String childName = child.getName();
-            if (childName.equals("form-beans")) {
-                List<Element> formBeans = child.getChildren();
-                formBeans.forEach(formBean -> {
-                    Fact fact = new Fact();
-                    String formBeanName = formBean.getAttributeValue("name");
-                    String formBeanType = formBean.getAttributeValue("type");
-                    fact.setRoute(formBeanName);
-                    fact.setClassName(formBeanType);
-                    fact.setClassName(Utils.getMD5Str(formBeanName));
-                    fact.setCredibility(2);
-                    fact.setDescription(String.format("从%s文件中发现%s", "", formBean.toString()));
-                });
-            } else if (childName.equals("action-mappings")) {
-                List<Element> actions = child.getChildren();
-                actions.forEach(action -> {
-                    Fact fact = new Fact();
-                    String path = action.getAttributeValue("action");
-                    String actionType = action.getAttributeValue("type");
-                    fact.setRoute(path);
-                    fact.setClassName(actionType);
-                    fact.setClassName(Utils.getMD5Str(actionType));
-                    fact.setCredibility(2);
-                    fact.setDescription(String.format("从%s文件中发现%s", "", action.toString()));
-                });
-            }
-        });
     }
 }
