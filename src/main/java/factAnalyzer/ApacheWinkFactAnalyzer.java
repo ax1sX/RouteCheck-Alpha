@@ -1,10 +1,13 @@
 package factAnalyzer;
 
 import annotations.FactAnalyzerAnnotations;
+import entry.Fact;
+import exceptions.FactAnalyzerException;
 import project.entry.Jar;
 import soot.SootClass;
 import soot.tagkit.VisibilityAnnotationTag;
 
+import java.util.Collection;
 import java.util.Map;
 
 @FactAnalyzerAnnotations(
@@ -25,5 +28,10 @@ public class ApacheWinkFactAnalyzer extends JAXRSFactAnalyzer{
         }else{
             this.setEnable(false);
         }
+    }
+
+    @Override
+    public void analysis(Object object, Collection<Fact> factChain) throws FactAnalyzerException {
+        super.analysis(object, factChain);
     }
 }

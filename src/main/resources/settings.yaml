@@ -1,11 +1,12 @@
 factAnalyzers:
   default: [ApacheCXFFactAnalyzer, ApacheWinkFactAnalyzer, GuiceServletFactAnalyzer,
-            HttpServletFactAnalyzer, JerseyFactAnalyzer, RESTEasyFactAnalyzer, RestletFactAnalyzer,
+            JerseyFactAnalyzer, RESTEasyFactAnalyzer, RestletFactAnalyzer, JAXRSFactAnalyzer,
             SpringBeanFactAnalyzer,SpringMVCAnnotationFactAnalyzer,
             StrutsXmlFactAnalyzer, WSDDFactAnalyzer, WSDLFactAnalyzer, WebXmlFactAnalyzer, SOAPUnionFactAnalyzer,
-            UnionWebServiceFactAnalyzer, StrutsActionFactAnalyzer]
+            StrutsActionFactAnalyzer, HttpServletFactAnalyzer,
+            UnionWebServiceFactAnalyzer, UnionServletFactAnalyzer]
 outPutDirectory: ./output
 tempDirectory: ./output
 reportType: all
 
-#  UnionFactAnalyzer，StrutsConfigXmlFactAnalyzer(里面的路由基本被jsp路径涵盖了)， HttpServletFactAnalyzer(很多和SpringMVC、web.xml重合，要么就是没被应用)
+#  StrutsConfigXmlFactAnalyzer(里面的路由基本被jsp路径涵盖了)

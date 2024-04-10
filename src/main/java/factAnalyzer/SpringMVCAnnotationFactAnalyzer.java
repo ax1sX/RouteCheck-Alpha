@@ -37,7 +37,14 @@ public class SpringMVCAnnotationFactAnalyzer extends SpringFactAnalyzer{
                 a.getElems().forEach(e ->{
                     try{
                         if(e.getClass().toString().contains("AnnotationArrayElem")){
-                            if(e.getName().equals("path") || ((AnnotationArrayElem) e).getValues().toString().contains("/")){
+                            /**
+                             *     @RequestMapping(
+                             *         value = {"/getKnowledge"},
+                             *         produces = {"application/json;charset=UTF-8"}
+                             *     ) 如果只判断包含/会把produces的值提取出来
+                             */
+//                            if(e.getName().equals("path") || ((AnnotationArrayElem) e).getValues().toString().contains("/")){
+                            if(e.getName().equals("path") || e.getName().equals("value")){
                                 AnnotationArrayElem annotationArrayElem = (AnnotationArrayElem) e;
                                 annotationArrayElem.getValues().forEach(v ->{
                                     AnnotationStringElem annotationStringElem = (AnnotationStringElem) v;
@@ -76,9 +83,7 @@ public class SpringMVCAnnotationFactAnalyzer extends SpringFactAnalyzer{
                         Set<String> suffix = (Set<String>) findRoute(annotationTagsTemp);
                         Fact fact = new Fact();
                         fact.setClassName(sootClass.getName());
-//                        fact.setDescription("类文件中使用注解：" + annotationTags.toString() + "\n"
-//                                +annotationTagsTemp.toString());
-                        fact.setDescription("类文件中使用注解");
+                        fact.setDescription("类文件中使用RequestMapping注解");
 
                         /*
                         路由基本形态：/prefix/suffix。

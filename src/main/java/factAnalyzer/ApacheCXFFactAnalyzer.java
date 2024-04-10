@@ -30,18 +30,6 @@ public class ApacheCXFFactAnalyzer extends JAXRSFactAnalyzer{
         super(ApacheCXFFactAnalyzer.class.getName(), "config", "");
     }
 
-//    @Override
-//    public void prepare(Object object) {
-//        Map<String, Jar> jarMap = this.getProject().getJarMap();
-//        SootClass sootClass = (SootClass) object;
-//        VisibilityAnnotationTag visibilityAnnotationTag = (VisibilityAnnotationTag) sootClass.getTag("VisibilityAnnotationTag");
-//        if(jarMap.containsKey("cfx-rt") && visibilityAnnotationTag != null){
-//            this.setEnable(true);
-//        }else{
-//            this.setEnable(false);
-//        }
-//    }
-
     @Override
     public void prepare(Object object) {
 
@@ -126,8 +114,6 @@ public class ApacheCXFFactAnalyzer extends JAXRSFactAnalyzer{
                 fact.setRoute(value);
                 fact.setDescription(String.format("从文件%s中提取出WebService API", config.getFilePath()));
                 fact.setCredibility(3);
-                /*考虑到这个doget dopost之类的这些方法解析不到，就默认设置了do*，没有把这个字段设置为空*/
-                // TODO: 这里不应该设置成do*
                 fact.setMethod("—");
                 fact.setFactName(getName());
                 factChain.add(fact);

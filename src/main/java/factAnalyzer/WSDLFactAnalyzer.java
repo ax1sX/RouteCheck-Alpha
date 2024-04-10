@@ -71,29 +71,4 @@ public class WSDLFactAnalyzer extends SOAPFactAnalyzer{
             throw new FactAnalyzerException(e.getMessage());
         }
     }
-
-    public static void main(String[] args) throws Exception {
-        SAXBuilder saxBuilder = new SAXBuilder();
-        InputStream is = new FileInputStream(new File("D:\\工作\\文档\\源码\\久其财务报表\\ACRDataTransport.wsdl"));
-        Document document = saxBuilder.build(is);
-        Element rootElement = document.getRootElement();
-        List<Element> children = rootElement.getChildren();
-        children.forEach(child ->{
-            if(child.getName().equals("service")){
-                List<Element> grandson = child.getChildren();
-                grandson.forEach(gs ->{
-                    if(gs.getName().equals("port")){
-                    List<Element> greatGrandSon = gs.getChildren();
-                    greatGrandSon.forEach(ggs -> {
-                        if(ggs.getName().equals("address")){
-
-                            ggs.getAttributeValue("location");
-                        }
-                    });
-                    }
-                });
-            }
-
-        });
-    }
 }

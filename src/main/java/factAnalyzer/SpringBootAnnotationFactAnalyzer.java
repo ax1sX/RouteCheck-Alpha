@@ -70,7 +70,7 @@ public class SpringBootAnnotationFactAnalyzer extends SpringFactAnalyzer{
                         Set<String> suffix = (Set<String>) findRoute(annotationTagsTemp);
                         Fact fact = new Fact();
                         fact.setClassName(sootClass.getName());
-                        fact.setDescription("类文件中使用注解：" + annotationTags.toString() + "\n"
+                        fact.setDescription("类文件中使用RequestMapping注解：" + annotationTags.toString() + "\n"
                                 +annotationTagsTemp.toString());
                         if (prefix.size() > 0) {
                             prefix.forEach(p -> {

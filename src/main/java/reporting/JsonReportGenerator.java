@@ -31,30 +31,38 @@ public class JsonReportGenerator extends AbstractReportGenerator{
         List<String> Routes = new ArrayList<>();
         try {
             String out = this.settings.getOutPutDirectory();
+//            String projectPath = this.command.getProjectPath();
             Utils.mkDir(out);
             String filePath = out + File.separator  + "test.json";
-//            Map<String, Object> context = new HashMap<>();
             JSONObject json = new JSONObject();
             Date date = new Date();
             DateFormat df = new SimpleDateFormat("yyyy年MM月dd日");
             String dataStr = df.format(date);
             json.put("date", dataStr);
             String prevProjectName = null;
-            String extractedName = null;
+            String extractedName = "";
             // 如果是projects添加根路由，如果是单项目不加根路由
             Set<Map.Entry<Project, List<Fact>>> projectsChain = this.projects.getAllProjectsAndFactChains();
             JSONArray projectsArray = new JSONArray();
 
             for (Map.Entry<Project, List<Fact>> entry : projectsChain) {
                 List<StrutsAction> actions = this.projects.getActionChain(entry.getKey());
-                String projectName = entry.getKey().getName(); // projectName包含/xx/xx/a，截取最后一个/后的内容
-//                json.put("project", projectName);
+                String projectName = entry.getKey().getName();
                 projectsArray.put(projectName);
-                int lastSlashIndex = projectName.lastIndexOf('/');
-                if (lastSlashIndex != -1 && lastSlashIndex < projectName.length() - 1) {
-                    extractedName = projectName.substring(lastSlashIndex + 1);
-                    extractedName = "/" + extractedName; // 在项目根目录前加上/
+                if (projectName != null && projectName.length() > 0){
+                    int lastSlashIndex = projectName.lastIndexOf('/');
+                    if (lastSlashIndex != -1 && lastSlashIndex < projectName.length() - 1) {  // projectName包含/b/a，截取最后一个/后的内容
+                        extractedName = projectName.substring(lastSlashIndex + 1);
+                        extractedName = "/" + extractedName; // 在项目根目录前加上/
+                    } else if (lastSlashIndex != -1 && lastSlashIndex == projectName.length() -1) { // projectName为/b/a/
+                        int secondLastSlashIndex = projectName.substring(0, lastSlashIndex).lastIndexOf('/');
+                        if (secondLastSlashIndex != -1) {
+                            extractedName = projectName.substring(secondLastSlashIndex + 1, lastSlashIndex);
+                            extractedName = "/" + extractedName; // 在项目根目录前加上/
+                        }
+                    }
                 }
+
                 if (this.projects.getProjectCount() == 1){
                     extractedName = "";
                 }

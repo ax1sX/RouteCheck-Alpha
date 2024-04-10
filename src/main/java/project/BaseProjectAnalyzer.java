@@ -70,12 +70,10 @@ public class BaseProjectAnalyzer {
             Options.v().set_include_all(true); // 包含所有的类
             Options.v().set_ignore_resolving_levels(true);
             classFilePaths.clear(); //清空classFilePath，不然scanClass会把之前子项目的也计算一遍
-//            scanClass(new File(classPath));
             scanClass(new File(classPath+"/WEB-INF/classes/"));
             Scene.v().setPhantomRefs(true);
             Scene.v().setSootClassPath(sootClassPath);
             Scene.v().loadNecessaryClasses();
-//            buildSootClass();
         }catch (Exception e){
             LOGGER.info(e.getMessage());
         }
@@ -214,64 +212,48 @@ public class BaseProjectAnalyzer {
      * 扫描源码层次结构
      */
 
-    // 新增，扫描子文件夹
-    public List<String> analysisSubModule(){
+    public List<String> analysisSubModule() {
         String projectPath = command.getProjectPath();
         File rootFolder = new File(projectPath);
 
-        List<String> subFolderNames = ScanFirstSubFolderNames(rootFolder);
-        if (subFolderNames != null){
-            for (String folderName : subFolderNames) {
-                boolean containsWebXml = containsWebXmlInWebInf(new File(projectPath+"/"+folderName));
-                if (containsWebXml){
-                    targetFolders.add(folderName);
-                }
-            }
-        }
+        List<String> targetFolders = new ArrayList<>();
+
+        // scan all subfolders
+        scanAllSubFolders(rootFolder, rootFolder, targetFolders);
+
         return targetFolders;
     }
 
-    // 扫描源码的第一层文件夹目录，如果第一层目录中就有WEB-INF目录，说明是单项目结构
-    public static List<String> ScanFirstSubFolderNames(File folder) {
-        List<String> subFolderNames = new ArrayList<>();
-
-        if (folder.isDirectory()) {
-            File[] files = folder.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        if (file.getName().equalsIgnoreCase("WEB-INF")){
-                            return null;
-                        }
-                        subFolderNames.add(file.getName());
-                    }
-                }
-            }
+    private void scanAllSubFolders(File rootFolder, File folder, List<String> targetFolders) {
+        if (!folder.isDirectory()) {
+            return;
         }
 
-        return subFolderNames;
-    }
-
-    // 判断子文件夹中是否包含/WEB-INF/文件夹和web.xml文件
-    public static boolean containsWebXmlInWebInf(File folder) {
-        if (!folder.isDirectory()) {
-            return false;
+        String relativePath = rootFolder.toURI().relativize(folder.toURI()).getPath(); // Calculate relative path
+        if (relativePath.equals("")) {
+            relativePath = "."; // If relative path is empty, set it to current directory indicator
         }
 
         File[] files = folder.listFiles();
         if (files != null) {
             for (File file : files) {
                 if (file.isDirectory() && file.getName().equalsIgnoreCase("WEB-INF")) {
-                    return containsWebXml(file);
+                    if (containsWebXml(file)) {
+                        targetFolders.add(relativePath);
+                    }
                 }
+                // Recursively scan subfolders
+                scanAllSubFolders(rootFolder, file, targetFolders);
             }
         }
-
-        return false;
     }
 
-    public static boolean containsWebXml(File webInfFolder) {
-        File[] files = webInfFolder.listFiles();
+    public static boolean containsWebXml(File folder) {
+        if (!folder.isDirectory()) {
+            return false;
+        }
+
+        File[] files = folder.listFiles();
         if (files != null) {
             for (File file : files) {
                 if (file.isFile() && file.getName().equalsIgnoreCase("web.xml")) {

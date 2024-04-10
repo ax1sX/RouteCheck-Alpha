@@ -25,7 +25,6 @@ public class HttpServletFactAnalyzer extends AbstractFactAnalyzer{
 
     @Override
     public void prepare(Object object) {
-        // TODO： nothing
     }
 
     private boolean hasSuperClass(SootClass sootClass){
@@ -45,46 +44,47 @@ public class HttpServletFactAnalyzer extends AbstractFactAnalyzer{
         try {
             Fact fact = new Fact();
             SootClass sootClass = (SootClass) object;
-            // TODO: 1.判断是否使用注解; 2.判断是否继承HttpServlet
-            AtomicBoolean hasWebServlet = new AtomicBoolean(false);
+            // TODO: 1.不扫描使用注解的Servlet(SpringMVCAnnotationFactAnalyzer具备这部分功能); 2.判断是否继承HttpServlet
             VisibilityAnnotationTag visibilityAnnotationTag = (VisibilityAnnotationTag) sootClass.getTag("VisibilityAnnotationTag");
-            if(visibilityAnnotationTag != null && visibilityAnnotationTag.hasAnnotations()){
-                ArrayList<AnnotationTag> annotationTags =  visibilityAnnotationTag.getAnnotations();
-                annotationTags.forEach(a -> {
-                    if(a.getType().equals("Ljavax/servlet/annotation/WebServlet;")){
-                        a.getElems().forEach(e ->{
-                            if(e.getClass().toString().contains("AnnotationArrayElem")){
-                                if(e.getName().equals("urlPatterns") || e.toString().contains("/")){
-                                    AnnotationArrayElem annotationArrayElem = (AnnotationArrayElem) e;
-                                    annotationArrayElem.getValues().forEach(v ->{
-                                        AnnotationStringElem annotationStringElem = (AnnotationStringElem) v;
-                                        String route = annotationStringElem.getValue();
-                                        fact.setRoute(route);
-                                    });
-                                    fact.setClassName(sootClass.getName());
-                                    fact.setDescription("类文件中使用注解：" + a.toString());
-                                    fact.setCredibility(3);
-                                    fact.setMethod("do*");
-                                    fact.setFactName(getName());
-                                    factChain.add(fact);
-                                    hasWebServlet.set(true);
-                                }
-                            }
-                        });
-                    }
-                });
-            }
-
-            if(!hasWebServlet.get() && sootClass.hasSuperclass()){
+            if(visibilityAnnotationTag != null && sootClass.hasSuperclass()){
                 if(hasSuperClass(sootClass)){
+                    fact.setRoute("—");
                     fact.setClassName(sootClass.getName());
-                    fact.setCredibility(1);
-                    fact.setDescription("类文件继承（直接或间接）javax.servlet.http.HttpServlet");
-                    fact.setMethod("do*");
+                    fact.setCredibility(3);
+                    fact.setDescription("类文件(直接或间接)继承javax.servlet.http.HttpServlet");
+                    fact.setMethod("—");
                     fact.setFactName(getName());
                     factChain.add(fact);
                 }
             }
+//            AtomicBoolean hasWebServlet = new AtomicBoolean(false);
+//            if(visibilityAnnotationTag != null && visibilityAnnotationTag.hasAnnotations()){
+//                ArrayList<AnnotationTag> annotationTags =  visibilityAnnotationTag.getAnnotations();
+//                annotationTags.forEach(a -> {
+//                    if(a.getType().equals("Ljavax/servlet/annotation/WebServlet;")){
+//                        a.getElems().forEach(e ->{
+//                            if(e.getClass().toString().contains("AnnotationArrayElem")){
+//                                if(e.getName().equals("urlPatterns") || e.toString().contains("/")){
+//                                    AnnotationArrayElem annotationArrayElem = (AnnotationArrayElem) e;
+//                                    annotationArrayElem.getValues().forEach(v ->{
+//                                        AnnotationStringElem annotationStringElem = (AnnotationStringElem) v;
+//                                        String route = annotationStringElem.getValue();
+//                                        fact.setRoute(route);
+//                                    });
+//                                    fact.setClassName(sootClass.getName());
+//                                    fact.setDescription(String.format("类文件中使用注解%s", a.toString()));
+//                                    fact.setCredibility(3);
+//                                    fact.setMethod("—");
+//                                    fact.setFactName(getName());
+//                                    factChain.add(fact);
+//                                    hasWebServlet.set(true);
+//                                }
+//                            }
+//                        });
+//                    }
+//                });
+//            }
+
         }catch (Exception e){
             throw new FactAnalyzerException(e.getMessage());
         }

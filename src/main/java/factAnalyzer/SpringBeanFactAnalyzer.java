@@ -39,57 +39,42 @@ public class SpringBeanFactAnalyzer extends SpringFactAnalyzer{
                     if (child.getName().equals("bean")) {
                         Fact fact = new Fact();
                         String clazz = child.getAttributeValue("class");
-                        // https://developer.aliyun.com/article/574556
-                        if (clazz.equals("org.springframework.remoting.rmi.RmiServiceExporter") ||
-                                clazz.equals("org.springframework.remoting.httpinvoker.HttpInvokerServiceExporter")) {
+                        String name = child.getAttributeValue("name");
+                        // 基于Spring实现的RMI, HttpInvoker，Hessian, JAX-RPC，从客户端提取访问url
+                        if (clazz.equals("org.springframework.remoting.rmi.RmiProxyFactoryBean") ||
+                                clazz.equals("org.springframework.remoting.httpinvoker.HttpInvokerProxyFactoryBean") ||
+                                clazz.equals("org.springframework.remoting.caucho.HessianProxyFactoryBean")
+                        ) {
                             List<Element> properties = child.getChildren();
-                            properties.forEach(property ->{
-                                if(property.getName().equals("property")){
-                                    if(property.getAttributeValue("name").equals("serviceName")){
+                            properties.forEach(property -> {
+                                if (property.getName().equals("property")) {
+                                    if (property.getAttributeValue("name").equals("serviceUrl")) {
                                         String route = property.getChildText("value", property.getNamespace());
-                                        fact.setCredibility(2);
-                                        fact.setDescription(child.toString());
+                                        fact.setDescription(String.format("从文件%s中提取出RMI的serviceUrl属性", configPath));
                                         fact.setRoute(route);
-                                    }
-                                    if(property.getAttributeValue("name").equals("service")){
-                                        String route = property.getAttributeValue("ref");
-                                        if(route == null){
-                                            route = property.getText();
-                                        }
-                                        fact.setCredibility(2);
-                                        fact.setDescription(child.toString());
-                                        fact.setRoute(route);
-                                    }
-                                    if(property.getAttributeValue("name").equals("serviceInterface")){
-                                        String clazzName = "";
-                                        try{
-                                            clazzName = property.getChildText("value", property.getNamespace());
-                                            if(clazzName == null){
-                                                clazzName = property.getAttributeValue("value");
-                                            }
-                                        }catch (Exception ex){
-                                        }
-                                        fact.setCredibility(2);
-                                        fact.setDescription(child.toString());
-                                        fact.setClassName(clazzName);
-                                        fact.setFactName(getName());
                                         factChain.add(fact);
                                     }
                                 }
                             });
                             return;
+                        } else if (clazz.equals("org.springframework.remoting.jaxrpc.JaxRpcPortProxyFactoryBean")) {
+                            List<Element> properties = child.getChildren();
+                            properties.forEach(property -> {
+                                if (property.getName().equals("property")) {
+                                    if (property.getAttributeValue("name").equals("wsdlDocumentUrl")) {
+                                        String route = property.getChildText("value", property.getNamespace());
+                                        fact.setDescription(String.format("从文件%s中提取出JAX-RPC的wsdlDocumentUrl属性", configPath));
+                                        fact.setRoute(route);
+                                        factChain.add(fact);
+                                    }
+                                }
+                            });
                         }
-                        String oldClazz = clazz.substring(clazz.lastIndexOf(".") + 1);
-                        String name = child.getAttributeValue("name");
-                        if (name != null && oldClazz.endsWith("Controller")) {
-                            fact.setDescription(child.toString());
-                            if (name.startsWith("/")) {
-                                fact.setCredibility(3);
-                            } else {
-                                fact.setCredibility(1);
-                            }
-                            fact.setMethod("handleRequest");
+
+                        if (name != null && name.contains("/")){ // 这个逻辑的案例—蓝凌EKP
                             fact.setRoute(name);
+                            fact.setMethod("—");
+                            fact.setDescription(String.format("从文件%s中提取出Bean的name属性", configPath));
                             fact.setClassName(clazz);
                             fact.setFactName(getName());
                             factChain.add(fact);

@@ -1,5 +1,6 @@
 package factAnalyzer;
 
+import annotations.FactAnalyzerAnnotations;
 import entry.Fact;
 import exceptions.FactAnalyzerException;
 import soot.SootClass;
@@ -11,7 +12,9 @@ import utils.Utils;
 
 import java.util.*;
 
-
+@FactAnalyzerAnnotations(
+        name = "JAXRSFactAnalyzer"
+)
 public class JAXRSFactAnalyzer extends AbstractFactAnalyzer {
     protected final String PATTERN = "Lorg/springframework/stereotype/Controller;";
     protected final String PATTERNPATH = "Ljavax/ws/rs/Path;";
@@ -24,6 +27,7 @@ public class JAXRSFactAnalyzer extends AbstractFactAnalyzer {
         super(name, type, description);
     }
 
+    // 获取@Path标签中的值
     protected Collection<String> findRoute(ArrayList<AnnotationTag> annotationTags) {
         Set<String> route = new HashSet<>();
         annotationTags.forEach(a -> {
@@ -65,13 +69,11 @@ public class JAXRSFactAnalyzer extends AbstractFactAnalyzer {
                             String sootMethodVisibilityAnnotationTagString = visibilityAnnotationTagTemp.toString();
                             boolean isMat = sootMethodVisibilityAnnotationTagString.contains(PATTERNPATH);
                             if (isMat) {
-                                // 提取路由，创建新事实
                                 ArrayList<AnnotationTag> annotationTagsTemp = visibilityAnnotationTagTemp.getAnnotations();
                                 Set<String> suffix = (Set<String>) findRoute(annotationTagsTemp);
                                 Fact fact = new Fact();
                                 fact.setClassName(sootClass.getName());
-                                fact.setDescription("类文件中使用注解：" + annotationTags.toString() + "\n"
-                                        + annotationTagsTemp.toString());
+                                fact.setDescription("类文件中使用注解@Path");
                                 if (prefix.size() > 0) {
                                     prefix.forEach(p -> {
                                         suffix.forEach(s -> {

@@ -24,6 +24,7 @@ public class WebXmlFactAnalyzer extends AbstractFactAnalyzer {
     static Map<String, Set<Element>> servletMappings = new HashMap<>();
     static Map<String, Element> filters = new HashMap<>();
     static Map<String, Set<Element>> filterMappings = new HashMap<>();
+    static List<String> AxisUrls = new ArrayList<>();
 
 
     public WebXmlFactAnalyzer() {
@@ -61,6 +62,7 @@ public class WebXmlFactAnalyzer extends AbstractFactAnalyzer {
             servletMappings.clear();
             filters.clear();
             filterMappings.clear();
+            AxisUrls.clear();
 
             Config config = (Config) object;
             String filePath = config.getFilePath();
@@ -107,22 +109,31 @@ public class WebXmlFactAnalyzer extends AbstractFactAnalyzer {
         servlets.put(servletName, servlet);
     }
 
-    private void processServletMapping(Element servletMapping) {
-        String servletName = servletMapping.getChildText("servlet-name", servletMapping.getNamespace());
-        Set<Element> values = servletMappings.computeIfAbsent(servletName, k -> new HashSet<>());
-        values.add(servletMapping);
-    }
-
     private void processFilter(Element filter) {
         String filterName = filter.getChildText("filter-name", filter.getNamespace());
         filters.put(filterName, filter);
     }
 
-    private void processFilterMapping(Element filterMapping) {
-        String filterName = filterMapping.getChildText("filter-name", filterMapping.getNamespace());
-        Set<Element> values = filterMappings.computeIfAbsent(filterName, k -> new HashSet<>());
-        values.add(filterMapping);
+    private void processMapping(Element mapping, Map<String, Set<Element>> mappings, String nameTag) {
+        String name = mapping.getChildText(nameTag, mapping.getNamespace()); // 获取filter-name或servlet-name标签的值
+        String urlPattern = mapping.getChildText("url-pattern", mapping.getNamespace());
+        if (urlPattern != null && urlPattern.startsWith("/") && !urlPattern.equals("/*") && !urlPattern.equals("/")) {
+            Set<Element> values = mappings.computeIfAbsent(name, k -> new HashSet<>());
+            values.add(mapping);
+        }
+        if (name.equals("AxisServlet")) {
+            AxisUrls.add(urlPattern);
+        }
     }
+
+    private void processServletMapping(Element servletMapping) {
+        processMapping(servletMapping, servletMappings, "servlet-name");
+    }
+
+    private void processFilterMapping(Element filterMapping) {
+        processMapping(filterMapping, filterMappings, "filter-name");
+    }
+
 
     private void processElements(Map<String, Element> elements, Map<String, Set<Element>> mappings, String descriptionTemplate, String classNameKey, Collection<Fact> factChain, Config config) {
         if (elements.isEmpty() || mappings.isEmpty()) return;
