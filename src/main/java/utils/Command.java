@@ -76,7 +76,7 @@ public class Command {
         options.addOption("pp", "project-path", true, "项目路径"); // 必选项，项目根路径
         options.addOption("cp", "class-path", false, "类文件地址");
         options.addOption("lp", "lib-path", false, "库文件地址");
-        options.addOption("sp", "setting-path", false, "设置配置文件地址");
+        options.addOption("sp", "setting-path", true, "设置配置文件地址");
         options.addOption("o", "outPut", false, "结果保存目录"); // 改为false，和settings保持一致
 
         CommandLine commandLine = parser.parse(options, args);

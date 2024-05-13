@@ -1,6 +1,21 @@
 2023年初我和@suizhibo完成了RouteCheck的雏形，目的是用于分析和提取源码中所有的访问路由。
-近期我将对RouteCheck进一步打磨，让它成为好用的代码审计工具。
-争取在四月底之前完工，然后更新RouteCheck的开发文档和使用说明。
+
+磨磨唧唧一直没改完，先发布了一版适合扫国内java源码的。这个版本的限制是要求源码中采用的是包含`/WEB-INF/`的目录格式。
+
+现在使用还是需要传递个`-sp`参数，来包含`settings.yaml`的路径。这个在后续的版本中会合并到jar中。
+该配置文件主要用来定义需要用到的分析器、路由的输出位置和格式。
+```
+factAnalyzers:
+  default: [ApacheCXFFactAnalyzer, ApacheWinkFactAnalyzer, GuiceServletFactAnalyzer,
+            JerseyFactAnalyzer, RESTEasyFactAnalyzer, RestletFactAnalyzer, JAXRSFactAnalyzer,
+            SpringBeanFactAnalyzer,SpringMVCAnnotationFactAnalyzer,
+            StrutsXmlFactAnalyzer, WSDDFactAnalyzer, WSDLFactAnalyzer, WebXmlFactAnalyzer, SOAPUnionFactAnalyzer,
+            StrutsActionFactAnalyzer, HttpServletFactAnalyzer,
+            UnionWebServiceFactAnalyzer, UnionServletFactAnalyzer]
+outPutDirectory: ./output
+tempDirectory: ./output
+reportType: all
+```
 
 # Usage
 
@@ -24,7 +39,7 @@ usage: java -jar RouteCheck.jar [-cp <arg>] [-h] [-lp <arg>] [-o <arg>] [-pn
 ```
 Default Usage
 ```text
- java -jar RouteCheck.jar -pp /Users/axisx/Download/project
+ java -jar RouteCheck.jar -pp /Users/axisx/Download/project -sp /Users/axisx/Download/settings.yaml
 ```
 Only `-pp` parameter is mandatory, All other parameters are optional. If `-lp` or `-cp` parameter is not specified, RouteCheck will automatically extract it from the project.
 
