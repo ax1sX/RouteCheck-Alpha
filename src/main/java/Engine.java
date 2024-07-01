@@ -83,8 +83,8 @@ public class Engine {
         List<String> targetFolders = baseProjectAnalyzer.analysisSubModule();
         if( targetFolders != null && !targetFolders.isEmpty()) {
             for (String tf : targetFolders) {
-                Project project =new Project();
-                project.setName(command.getProjectPath()+"/"+tf); // 默认只扫源码的第一层目录结构
+                Project project = new Project();
+                project.setName(command.getProjectPath() + File.separator + tf); // 默认只扫源码的第一层目录结构
                 projects.addProject(project);
                 count = count + 1;
             }

@@ -54,7 +54,7 @@ public class BaseProjectAnalyzer {
 
     private void analysisClasses(String classPath){
         List<String> classPaths = new ArrayList<>();
-        classPaths.add(classPath+"/WEB-INF/classes/");
+        classPaths.add(classPath + File.separator +"WEB-INF" + File.separator +"classes" + File.separator);
         libs.addAll(jarFilePaths);
         libs.add(JRE_DIR);
         excludeJDKLibrary();
@@ -70,7 +70,7 @@ public class BaseProjectAnalyzer {
             Options.v().set_include_all(true); // 包含所有的类
             Options.v().set_ignore_resolving_levels(true);
             classFilePaths.clear(); //清空classFilePath，不然scanClass会把之前子项目的也计算一遍
-            scanClass(new File(classPath+"/WEB-INF/classes/"));
+            scanClass(new File(classPath + File.separator +"WEB-INF" + File.separator +"classes" + File.separator));
             Scene.v().setPhantomRefs(true);
             Scene.v().setSootClassPath(sootClassPath);
             Scene.v().loadNecessaryClasses();
@@ -81,9 +81,9 @@ public class BaseProjectAnalyzer {
             String clp;
             if (!classFilePaths.isEmpty()){
                 clp = classFilePaths.get(0);
-                int startIndex = clp.indexOf("/WEB-INF/classes/");
+                int startIndex = clp.indexOf(File.separator +"WEB-INF" + File.separator +"classes" + File.separator);
                 if (startIndex != -1) {
-                    int length = "/WEB-INF/classes".length();
+                    int length = (File.separator +"WEB-INF" + File.separator +"classes" + File.separator).length();
                     this.tempClassPathLength = startIndex + length;
                 }else{
                     this.tempClassPathLength = clp.length();
