@@ -260,11 +260,12 @@ public class Engine {
                         fa.prepare(sootClass);
                         if (fa.isEnable()) {
                             LOGGER.info("Class FactAnalyzer");
-                            if (fa.getName().equals("factAnalyzer.StrutsActionFactAnalyzer")){
-                                fa.analysis(sootClass, factChain, actionChain);
-                            }else {
-                                fa.analysis(sootClass,factChain);
-                            }
+                            fa.analysis(sootClass, factChain, actionChain);
+//                            if (fa.getName().equals("factAnalyzer.StrutsActionFactAnalyzer")){
+//                                fa.analysis(sootClass, factChain, actionChain);
+//                            }else {
+//                                fa.analysis(sootClass,factChain);
+//                            }
 
                             LOGGER.info(sootClass.getName() + ": " + fa.getName() + " Done");
                         }

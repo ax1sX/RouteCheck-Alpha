@@ -105,6 +105,7 @@ public class StrutsActionFactAnalyzer extends AbstractFactAnalyzer{
 
     @Override
     public void prepare(Object object) {
+        this.setEnable(false);
         SootClass sootClass = (SootClass) object;
         String className = sootClass.getName();
         // className是含包名的类名，截取最后一个 . 后的内容，判断是否包含Action
@@ -113,11 +114,7 @@ public class StrutsActionFactAnalyzer extends AbstractFactAnalyzer{
             String suffix = className.substring(lastIndex + 1);
             if (suffix.endsWith("Action")) {
                 this.setEnable(true);
-            }else {
-                this.setEnable(false);
             }
-        } else {
-            this.setEnable(false);
         }
     }
 
