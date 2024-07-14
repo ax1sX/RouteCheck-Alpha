@@ -12,6 +12,7 @@ import soot.SootClass;
 import soot.options.Options;
 import entry.Settings;
 import utils.Command;
+import utils.Utils;
 
 import java.io.File;
 import java.util.*;
@@ -36,7 +37,6 @@ public class BaseProjectAnalyzer {
 
     private Settings settings;
     private Command command;
-    private int tempClassPathLength;
 
     /**
      * 扫描项目有哪些文件，分为Config配置文件、jar文件、Class文件，然后将Class文件放入Soot
@@ -52,13 +52,14 @@ public class BaseProjectAnalyzer {
         analysisClasses(projectPath);
     }
 
-    private void analysisClasses(String classPath){
-        List<String> classPaths = new ArrayList<>();
-        classPaths.add(classPath + File.separator +"WEB-INF" + File.separator +"classes" + File.separator);
+    private void analysisClasses(String projectPath){
         libs.addAll(jarFilePaths);
         libs.add(JRE_DIR);
         excludeJDKLibrary();
-        String sootClassPath = String.join(File.pathSeparator, classPaths) + File.pathSeparator +
+        classFilePaths.clear(); //清空classFilePath，不然scanClass会把之前子项目的也计算一遍
+        scanClass(new File(projectPath));
+        List<String> classDirs = Utils.getClassPath(this.classFilePaths);
+        String sootClassPath = String.join(File.pathSeparator, classDirs) + File.pathSeparator +
                 String.join(File.pathSeparator, libs);
         // TODO: 执行loadNecessaryClasses时某类会报错 This operation requires resolving level SIGNATURES
         //  but xx类 is at resolving level HIERARCHY. 暂时用ignore_resolving_levels解决
@@ -66,31 +67,12 @@ public class BaseProjectAnalyzer {
             Options.v().set_whole_program(true);
             Options.v().set_app(true);
             Options.v().set_allow_phantom_refs(true);
-            Options.v().set_process_dir(classPaths);
-            Options.v().set_include_all(true); // 包含所有的类
+            Options.v().set_process_dir(classDirs);
+            Options.v().set_include_all(false); // 包含所有的类
             Options.v().set_ignore_resolving_levels(true);
-            classFilePaths.clear(); //清空classFilePath，不然scanClass会把之前子项目的也计算一遍
-            scanClass(new File(classPath + File.separator +"WEB-INF" + File.separator +"classes" + File.separator));
             Scene.v().setPhantomRefs(true);
             Scene.v().setSootClassPath(sootClassPath);
             Scene.v().loadNecessaryClasses();
-        }catch (Exception e){
-            LOGGER.info(e.getMessage());
-        }
-        try{
-            String clp;
-            if (!classFilePaths.isEmpty()){
-                clp = classFilePaths.get(0);
-                int startIndex = clp.indexOf(File.separator +"WEB-INF" + File.separator +"classes" + File.separator);
-                if (startIndex != -1) {
-                    int length = (File.separator +"WEB-INF" + File.separator +"classes" + File.separator).length();
-                    this.tempClassPathLength = startIndex + length;
-                }else{
-                    this.tempClassPathLength = clp.length();
-                }
-            }else {
-                this.tempClassPathLength = project.getName().length();
-            }
             buildSootClass();
         }catch (Exception e){
             LOGGER.info(e.getMessage());
@@ -159,12 +141,10 @@ public class BaseProjectAnalyzer {
     private void buildSootClass(){
         Set<SootClass> sootClassSet = new HashSet<>();
         for (String classFilePath: classFilePaths) {
-            String path = classFilePath.substring(this.tempClassPathLength);
-            // 如果path以/开头，substring(1,x)。如果是字母开头，substring(0)。这部分写的有点死
-            String newPath = path.substring(1, path.lastIndexOf("."));
-            newPath = newPath.replace(File.separator, ".");
-            Scene.v().addBasicClass(newPath,SIGNATURES);
-            SootClass sootClass = Scene.v().loadClassAndSupport(newPath);
+            String fullyQualifiedName = Utils.getFullyQualifiedName(classFilePath);
+            fullyQualifiedName = fullyQualifiedName.replace(File.separator, ".");
+            Scene.v().addBasicClass(fullyQualifiedName,SIGNATURES);
+            SootClass sootClass = Scene.v().loadClassAndSupport(fullyQualifiedName);
             if(!sootClass.isJavaLibraryClass()){
                 sootClassSet.add(sootClass);
                 project.setClassesToPath(sootClass, classFilePath);

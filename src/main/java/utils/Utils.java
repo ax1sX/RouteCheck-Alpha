@@ -6,11 +6,15 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Map;
+import java.util.*;
+
+import org.apache.bcel.classfile.ClassParser;
+import org.apache.bcel.classfile.JavaClass;
 
 public class Utils {
 
     public static Command command = null;
+    static final public int MAGIC = 0xCAFEBABE;
 
     public static boolean mkDir(String path){
         File file = null;
@@ -93,4 +97,28 @@ public class Utils {
         return fileString;
     }
 
+
+
+    public static String getFullyQualifiedName(String classFilePath) {
+        try {
+            ClassParser parser = new ClassParser(classFilePath);
+            JavaClass javaClass = parser.parse();
+            String className = javaClass.getClassName();
+            return className;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+    public static List<String> getClassPath(List<String> classFilePaths) {
+        HashSet<String> classDir = new HashSet<>();
+        for (String classFilePath:
+             classFilePaths) {
+            String className = getFullyQualifiedName(classFilePath);
+            String classNameTemp = className.replace(".", File.separator);
+            classDir.add(classFilePath.substring(0, classFilePath.lastIndexOf(classNameTemp) - 1));
+        }
+        return new ArrayList<String>(classDir);
+    }
 }

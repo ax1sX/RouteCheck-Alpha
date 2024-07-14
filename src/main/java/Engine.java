@@ -79,22 +79,26 @@ public class Engine {
         projects = new Projects();
         LOGGER.info("Analysis Folders");
         baseProjectAnalyzer.initialize(command, settings, project);
-        int count = 0;
-        List<String> targetFolders = baseProjectAnalyzer.analysisSubModule();
-        if( targetFolders != null && !targetFolders.isEmpty()) {
-            for (String tf : targetFolders) {
-                Project project = new Project();
-                project.setName(command.getProjectPath() + File.separator + tf); // 默认只扫源码的第一层目录结构
-                projects.addProject(project);
-                count = count + 1;
-            }
-            projects.setProjectCount(count);
-        }else {
-            Project project =new Project();
-            project.setName(command.getProjectPath());
-            projects.addProject(project);
-            projects.setProjectCount(1);
-        }
+//        int count = 0;
+//        List<String> targetFolders = baseProjectAnalyzer.analysisSubModule();
+//        if( targetFolders != null && !targetFolders.isEmpty()) {
+//            for (String tf : targetFolders) {
+//                Project project = new Project();
+//                project.setName(command.getProjectPath() + File.separator + tf); // 默认只扫源码的第一层目录结构
+//                projects.addProject(project);
+//                count = count + 1;
+//            }
+//            projects.setProjectCount(count);
+//        }else {
+//            Project project =new Project();
+//            project.setName(command.getProjectPath());
+//            projects.addProject(project);
+//            projects.setProjectCount(1);
+//        }
+        Project project = new Project();
+        project.setName(command.getProjectPath());
+        projects.addProject(project);
+        projects.setProjectCount(1);
     }
 
     /**
