@@ -28,6 +28,10 @@ import java.util.concurrent.TimeUnit;
 public class Engine {
     private static final Logger LOGGER = LoggerFactory.getLogger(Engine.class);
     private Command command = new Command();
+    private List<FactAnalyzer> classFactAnalyzer = new ArrayList<>();
+    private List<FactAnalyzer> configFactAnalyzer = new ArrayList<>();
+    private List<FactAnalyzer> unionFactAnalyzer = new ArrayList<>();
+    private List<FactAnalyzer> factAnalyzers = new ArrayList<>();
 
     private BaseProjectAnalyzer baseProjectAnalyzer = null;
     private Project project;
@@ -73,12 +77,10 @@ public class Engine {
      * Fourth Step, Analyze project (Config, Jar, Class)
      */
     protected void analyzeModules() throws Exception {
-
         List<Module> modules = project.getAllModule();
         for (Module module : modules) {
             LOGGER.info("Analyze Module: " + module.getName());
             new ModuleAnalyzer(module).analysis();
-            List<FactAnalyzer> factAnalyzers = loadFactAnalyzer();
             List<Fact> factChain = new ArrayList<>();
             List<StrutsAction> actionChain = new ArrayList<>();
             evaluateFact(module, factAnalyzers, factChain, actionChain);
@@ -153,10 +155,6 @@ public class Engine {
         List<SootClass> sootClassList = module.getAllSootClass();
         Collection<Config> configs = module.getConfigs();
         resetFactOfModule(module, factAnalyzers);  // 重置事实分析器的module
-        List<FactAnalyzer> classFactAnalyzer = new ArrayList<>();
-        List<FactAnalyzer> configFactAnalyzer = new ArrayList<>();
-        List<FactAnalyzer> unionFactAnalyzer = new ArrayList<>();
-        initFact(factAnalyzers, classFactAnalyzer, configFactAnalyzer, unionFactAnalyzer); // 将事实分析器分类
         try {
             for (Config config : configs) {
                 for (FactAnalyzer fa : configFactAnalyzer) {
@@ -274,6 +272,8 @@ public class Engine {
         try {
             parseCommand(args);
             loadSettings();
+            factAnalyzers = loadFactAnalyzer();
+            initFact(factAnalyzers, classFactAnalyzer, configFactAnalyzer, unionFactAnalyzer); // 将事实分析器分类
             analyzeProject();
             analyzeModules();
             scanJsp();
