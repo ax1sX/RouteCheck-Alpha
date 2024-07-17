@@ -104,7 +104,7 @@ public class SpringMVCWebXmlFactAnalyzer extends SpringFactAnalyzer {
     @Override
     public void analysis(Object object, Collection<Fact> factChain) throws FactAnalyzerException {
         try {
-            String classPath = Utils.command.getClassPath();
+            String classPath = this.getModule().getClassPath();
             String projectPath = Utils.command.getProjectPath();
             Config config = (Config) object;
             String filePath = config.getFilePath();

@@ -29,20 +29,14 @@ reportType: all
                                                                                                         
 usage: java -jar RouteCheck.jar [-cp <arg>] [-h] [-lp <arg>] [-o <arg>] [-pn
        <arg>] [-pp <arg>] [-sp <arg>]
- -cp,--class-path <arg>     类文件地址
  -h,--help                  打印命令行帮助信息
- -lp,--lib-path <arg>       库文件地址
- -o,--outPut <arg>          结果保存目录
- -pn,--project-name <arg>   项目名称
- -pp,--project-path <arg>   项目路径
- -sp,--setting-path <arg>   设置文件地址
+ -pp,--module-path <arg>   项目路径
+
 ```
 Default Usage
 ```text
- java -jar RouteCheck.jar -pp /Users/axisx/Download/project -sp /Users/axisx/Download/settings.yaml
+ java -jar RouteCheck.jar -pp /Users/axisx/Download/module
 ```
-Only `-pp` parameter is mandatory, All other parameters are optional. If `-lp` or `-cp` parameter is not specified, RouteCheck will automatically extract it from the project.
-
 
 RouteCheck supports two output formats: HTML and JSON.
 

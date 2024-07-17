@@ -4,7 +4,7 @@ import entry.Fact;
 import entry.Settings;
 import entry.StrutsAction;
 import exceptions.FactAnalyzerException;
-import project.entry.Project;
+import project.entry.Module;
 
 import java.util.Collection;
 
@@ -15,7 +15,7 @@ public abstract class AbstractFactAnalyzer implements FactAnalyzer {
     public String type;
     public String description;
     private Settings settings;
-    private Project project;
+    private Module module;
     private Object object;
     private boolean enable = true;
 
@@ -43,14 +43,19 @@ public abstract class AbstractFactAnalyzer implements FactAnalyzer {
         return settings;
     }
 
-    public Project getProject() {
-        return project;
+    public Module getModule() {
+        return module;
     }
 
     @Override
-    public void initialize(Project project, Settings settings) {
-        this.project = project;
+    public void initialize(Module module, Settings settings) {
+        this.module = module;
         this.settings = settings;
+    }
+
+    @Override
+    public void resetModule(Module module){
+        this.module = module;
     }
 
     @Override

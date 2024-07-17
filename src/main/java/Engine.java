@@ -1,51 +1,38 @@
 import annotations.FactAnalyzerAnnotations;
+import entry.Fact;
+import entry.Settings;
 import entry.StrutsAction;
-import exceptions.*;
+import exceptions.LoadFactAnalyzerException;
+import exceptions.LoadSettingsException;
+import exceptions.ReportingException;
 import factAnalyzer.FactAnalyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import project.BaseProjectAnalyzer;
+import project.ModuleAnalyzer;
 import project.entry.Config;
+import project.entry.Module;
 import project.entry.Project;
-import project.entry.Projects;
 import reporting.ReportGenerator;
 import reporting.ReporterFactory;
 import soot.SootClass;
 import utils.Command;
-import utils.CoreClassLoader;
-import entry.Settings;
 import utils.Utils;
 import utils.YamlUtil;
-import entry.Fact;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URI;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 public class Engine {
     private static final Logger LOGGER = LoggerFactory.getLogger(Engine.class);
-    public final ClassLoader FACTANALYZER_CLASSLOADER = new CoreClassLoader(Engine.class.getClassLoader());
     private Command command = new Command();
 
-    private Collection<Fact> factChain = new ArrayList<>();
-    private Collection<StrutsAction> actionChain = new ArrayList<>();
-    private BaseProjectAnalyzer baseProjectAnalyzer = new BaseProjectAnalyzer();
-
+    private BaseProjectAnalyzer baseProjectAnalyzer = null;
     private Project project;
-    private Projects projects;
 
     private Settings settings;
-
-    Collection<FactAnalyzer> classFactAnalyzer = new ArrayList<>();
-    Collection<FactAnalyzer> configFactAnalyzer = new ArrayList<>();
-    Collection<FactAnalyzer> unionFactAnalyzer = new ArrayList<>();
-    private Collection<FactAnalyzer> factAnalyzers;
-
 
     /**
      * First Step, parse command-line argument
@@ -75,75 +62,47 @@ public class Engine {
     /**
      * Third Step, Analyze whether the folder contains multiple projects
      */
-    protected void analyzeFolder() throws Exception{
-        projects = new Projects();
-        LOGGER.info("Analysis Folders");
-        baseProjectAnalyzer.initialize(command, settings, project);
-//        int count = 0;
-//        List<String> targetFolders = baseProjectAnalyzer.analysisSubModule();
-//        if( targetFolders != null && !targetFolders.isEmpty()) {
-//            for (String tf : targetFolders) {
-//                Project project = new Project();
-//                project.setName(command.getProjectPath() + File.separator + tf); // 默认只扫源码的第一层目录结构
-//                projects.addProject(project);
-//                count = count + 1;
-//            }
-//            projects.setProjectCount(count);
-//        }else {
-//            Project project =new Project();
-//            project.setName(command.getProjectPath());
-//            projects.addProject(project);
-//            projects.setProjectCount(1);
-//        }
-        Project project = new Project();
-        project.setName(command.getProjectPath());
-        projects.addProject(project);
-        projects.setProjectCount(1);
+    protected void analyzeProject() throws Exception{
+        project = new Project(this.command.getProjectPath());
+        LOGGER.info("Analyze Project");
+        baseProjectAnalyzer = new BaseProjectAnalyzer(project);
+        baseProjectAnalyzer.analysis();
     }
 
     /**
      * Fourth Step, Analyze project (Config, Jar, Class)
      */
-    protected void analysisProject() throws Exception {
-        LOGGER.info("Analysis Project");
-        Set<Project> projectSet = projects.getProjects();
-        factAnalyzers = loadFactAnalyzer(project);
-        initFact();
-        for (Project project : projectSet) {
-            factChain.clear();
-            actionChain.clear();
-            baseProjectAnalyzer.initialize(command, settings, project);
-            baseProjectAnalyzer.analysis(project);
-            evaluateFact(project);
-            List<Fact> newFactChain = new ArrayList<>();
-            newFactChain.addAll(factChain);
-            projects.addFactChain(project, (List<Fact>) newFactChain);
-            List<StrutsAction> newActionChain = new ArrayList<>();
-            newActionChain.addAll(actionChain);
-            projects.addActionChain(project,newActionChain);
+    protected void analyzeModules() throws Exception {
+
+        List<Module> modules = project.getAllModule();
+        for (Module module : modules) {
+            LOGGER.info("Analyze Module: " + module.getName());
+            new ModuleAnalyzer(module).analysis();
+            List<FactAnalyzer> factAnalyzers = loadFactAnalyzer();
+            List<Fact> factChain = new ArrayList<>();
+            List<StrutsAction> actionChain = new ArrayList<>();
+            evaluateFact(module, factAnalyzers, factChain, actionChain);
+            project.addFactChainByModule(module, factChain);
+            project.addActionChainByModule(module, actionChain);
         }
     }
 
-    // TODO：这个其实也要改，不需要和project绑定，因为多项目结构，每个project实际都要用这个处理，相当于跑了N遍。应该设置成全局的
-    protected Collection<FactAnalyzer> loadFactAnalyzer(Project project) throws LoadFactAnalyzerException {
-        Collection<FactAnalyzer> factAnalyzerCollection = new ArrayList<>();
+    protected List<FactAnalyzer> loadFactAnalyzer() throws LoadFactAnalyzerException {
+        List<FactAnalyzer> factAnalyzerCollection = new ArrayList<>();
         try {
-            List<String> analyzers = settings.getFactAnalyzers().get("default"); // 原来是.get(project.getService())
-            // 获取factAnalyzer文件夹下的Analyzer解析器
             Map<String, Class> factAnalyzerNameToClass = scanFactAnalyzer();
-            for (String analyzer : analyzers) {
-                Class clazz = factAnalyzerNameToClass.get(analyzer);
+            for (Class clazz : factAnalyzerNameToClass.values()) {
                 if (clazz != null) {
                     try {
                         FactAnalyzer factAnalyzer = (FactAnalyzer) clazz.newInstance();
-                        factAnalyzer.initialize(project, settings);
+                        factAnalyzer.initialize(null, settings);
                         factAnalyzerCollection.add(factAnalyzer);
                     } catch (Exception e) {
                         LOGGER.debug(e.getMessage());
                     }
                 }
             }
-            LOGGER.info(String.format("Load FactAnalyzers(%s)", analyzers.size()));
+            LOGGER.info(String.format("Load FactAnalyzers(%s)", factAnalyzerCollection.size()));
         } catch (Exception e) {
             throw new LoadFactAnalyzerException(e.getMessage());
         }
@@ -155,7 +114,7 @@ public class Engine {
         try {
             URL url = Engine.class.getResource("/factAnalyzer/");
             ArrayList<Class> destList = new ArrayList<>();
-            scanClass(url.toURI(), "factAnalyzer", FactAnalyzer.class, FactAnalyzerAnnotations.class, destList);
+            Utils.scanClass(url.toURI(), "factAnalyzer", FactAnalyzer.class, FactAnalyzerAnnotations.class, destList);
             destList.forEach(clazz -> { // 扫描Analyzer列表
                 String clazzName = clazz.getSimpleName();
                 factAnalyzerNameToClass.put(clazzName, clazz);
@@ -166,63 +125,7 @@ public class Engine {
         }
     }
 
-    private void scanClass(URI uri, String packageName, Class<?> parentClass, Class<?> annotationClass, ArrayList<Class> destList) throws IOException, ClassNotFoundException {
-        try {
-            String jarFileString;
-            // 项目生成的RouteCheck.jar文件，找到factAnalyzer文件夹路径，扫描FactAnalyzer所有的子类，生成子类列表destList
-            if ((jarFileString = Utils.getJarFileByClass(Engine.class)) != null) {
-                scanClassByJar(new File(jarFileString), packageName, parentClass, annotationClass, destList);
-            } else {
-                File file = new File(uri);
-                File[] file2 = file.listFiles();
-                for (int i = 0; i < file2.length; i++) {
-                    File objectClassFile = file2[i];
-                    if (objectClassFile.getPath().endsWith(".class"))
-                        try {
-                            String objectClassName = String.format("%s.%s", new Object[]{packageName, objectClassFile.getName().substring(0, objectClassFile.getName().length() - ".class".length())});
-                            Class<?> objectClass = Class.forName(objectClassName, true, FACTANALYZER_CLASSLOADER);
-                            if (parentClass.isAssignableFrom(objectClass) && objectClass.isAnnotationPresent((Class) annotationClass)) {
-                                destList.add(objectClass);
-                            }
-                        } catch (Exception e) {
-                            LOGGER.debug(String.format("When scan class %s occur error: %", new Object[]{objectClassFile, e.getMessage()}));
-                        }
-                }
-            }
-        } catch (Exception e) {
-            throw e;
-        }
-    }
-
-    private void scanClassByJar(File srcJarFile, String packageName, Class<?> parentClass, Class<?> annotationClass, ArrayList<Class> destList) throws IOException, ClassNotFoundException {
-        try {
-            JarFile jarFile = new JarFile(srcJarFile);
-            Enumeration<JarEntry> jarFiles = jarFile.entries();
-            packageName = packageName.replace(".", "/");
-            while (jarFiles.hasMoreElements()) {
-                JarEntry jarEntry = (JarEntry) jarFiles.nextElement();
-                String name = jarEntry.getName();
-                if (name.startsWith(packageName) && name.endsWith(".class")) {
-                    name = name.replace("/", ".");
-                    name = name.substring(0, name.length() - 6);
-                    Class objectClass = Class.forName(name, true, FACTANALYZER_CLASSLOADER);
-                    try {
-                        if (parentClass.isAssignableFrom(objectClass) && objectClass.isAnnotationPresent(annotationClass)) {
-                            destList.add(objectClass);
-                        }
-                    } catch (Exception e) {
-                        LOGGER.debug(String.format("When scan class %s occur error: %", new Object[]{objectClass, e.getMessage()}));
-                    }
-                }
-            }
-            jarFile.close();
-        } catch (Exception ex) {
-            throw ex;
-        }
-    }
-
-
-    protected void initFact() throws Exception{
+    protected void initFact(List<FactAnalyzer> factAnalyzers, List<FactAnalyzer> classFactAnalyzer, List<FactAnalyzer> configFactAnalyzer, List<FactAnalyzer> unionFactAnalyzer) throws Exception{
         for (FactAnalyzer factAnalyzer : factAnalyzers) {
             if (factAnalyzer.getType().toLowerCase(Locale.ROOT).equals("class")) {
                 classFactAnalyzer.add(factAnalyzer);
@@ -234,14 +137,26 @@ public class Engine {
         }
     }
 
+    protected void resetFactOfModule(Module module, List<FactAnalyzer> factAnalyzers){
+        for (FactAnalyzer factAnalyzer:
+             factAnalyzers) {
+            factAnalyzer.resetModule(module);
+        }
+
+    }
+
     /**
      * Fifth Step, Evaluate Fact
      */
-    protected void evaluateFact(Project project) throws FactAnalyzerException {
+    protected void evaluateFact(Module module,List<FactAnalyzer> factAnalyzers,  List<Fact> factChain, List<StrutsAction> actionChain) throws Exception {
         LOGGER.info("Evaluate Fact");
-        // 单一结构改成多项目结构
-        Set<SootClass> sootClassSet = project.getClasses();
-        Collection<Config> configs = project.getConfigs();
+        List<SootClass> sootClassList = module.getAllSootClass();
+        Collection<Config> configs = module.getConfigs();
+        resetFactOfModule(module, factAnalyzers);  // 重置事实分析器的module
+        List<FactAnalyzer> classFactAnalyzer = new ArrayList<>();
+        List<FactAnalyzer> configFactAnalyzer = new ArrayList<>();
+        List<FactAnalyzer> unionFactAnalyzer = new ArrayList<>();
+        initFact(factAnalyzers, classFactAnalyzer, configFactAnalyzer, unionFactAnalyzer); // 将事实分析器分类
         try {
             for (Config config : configs) {
                 for (FactAnalyzer fa : configFactAnalyzer) {
@@ -258,19 +173,13 @@ public class Engine {
                 }
             }
 
-            for (SootClass sootClass : sootClassSet) {
+            for (SootClass sootClass : sootClassList) {
                 for (FactAnalyzer fa : classFactAnalyzer) {
                     try {
                         fa.prepare(sootClass);
                         if (fa.isEnable()) {
                             LOGGER.info("Class FactAnalyzer");
                             fa.analysis(sootClass, factChain, actionChain);
-//                            if (fa.getName().equals("factAnalyzer.StrutsActionFactAnalyzer")){
-//                                fa.analysis(sootClass, factChain, actionChain);
-//                            }else {
-//                                fa.analysis(sootClass,factChain);
-//                            }
-
                             LOGGER.info(sootClass.getName() + ": " + fa.getName() + " Done");
                         }
                     } catch (Exception e) {
@@ -304,7 +213,7 @@ public class Engine {
         LOGGER.info("Starting Scan Jsp");
         String ProjectPath = command.getProjectPath();
         List<String> jspFiles = findJSPFiles(ProjectPath, ProjectPath);
-        projects.setJSPPaths(jspFiles);
+        project.setJSPPaths(jspFiles);
         LOGGER.info("Scan Jsp Done");
     }
 
@@ -338,12 +247,12 @@ public class Engine {
         ReportGenerator reportGenerator = null;
         if (!type.equals("all")){
             reportGenerator = reportGeneratorMap.get(type);
-            reportGenerator.initialize(projects,settings);
+            reportGenerator.initialize(project,settings);
             reportGenerator.write();
         }else {
             for (Map.Entry<String, ReportGenerator> entry : reportGeneratorMap.entrySet()) {
                 ReportGenerator value = entry.getValue();
-                value.initialize(projects,settings);
+                value.initialize(project,settings);
                 value.write();
             }
 
@@ -365,10 +274,8 @@ public class Engine {
         try {
             parseCommand(args);
             loadSettings();
-            analyzeFolder();
-            analysisProject();
-//            factAnalyzers = loadFactAnalyzer();
-//            evaluateFact();
+            analyzeProject();
+            analyzeModules();
             scanJsp();
             writeReport();
         } catch (Exception e) {

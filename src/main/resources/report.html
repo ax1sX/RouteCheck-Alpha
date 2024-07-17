@@ -55,31 +55,27 @@
     </thead>
 
     <tbody>
-    {% set prevProjectName = None %}
-    {% for entry in projects.getAllProjectsAndFactChains() %}
-    {% for fact in entry.getValue() %}
-    {% set currentProjectName = entry.getKey().getName() %}
-    {% if prevProjectName != currentProjectName %}
-    <tr>
-        <td colspan="4">ProjectName: {{ currentProjectName }}</td>
-    </tr>
-    {% set prevProjectName = currentProjectName %}
-    {% endif %}
-    <tr>
-        <td>{{ fact.getRoutes() | join(', ') }}</td>
-        <td>{{ fact.getClassName() }}</td>
-        <td>{{ fact.getMethod() }}</td>
-        <td>{{ fact.getDescription() }}</td>
-        <td>{{ fact.getFactName() }}</td>
-    </tr>
-    {% endfor %}
+    {% for entry in project.getAllModulesAndFactChains() %}
+        {% set currentProjectName = entry.getKey().getName() %}
+        <tr>
+            <td colspan="4">ProjectName: {{ currentProjectName }}</td>
+        </tr>
+        {% for fact in entry.getValue() %}
+            <tr>
+                <td>{{ fact.getRoutes() | join(', ') }}</td>
+                <td>{{ fact.getClassName() }}</td>
+                <td>{{ fact.getMethod() }}</td>
+                <td>{{ fact.getDescription() }}</td>
+                <td>{{ fact.getFactName() }}</td>
+            </tr>
+        {% endfor %}
     {% endfor %}
 
-    {% if projects.getJSPPaths() %}
+    {% if project.getJSPPaths() %}
     <tr>
         <td colspan="5" style="width: 100%; font-size: 16px; font-weight: bold; padding-top: 10px; padding-bottom: 10px;">JSP Paths</td>
     </tr>
-    {% for jspPath in projects.getJSPPaths() %}
+    {% for jspPath in project.getJSPPaths() %}
     <tr>
         <td colspan="5" style="width: 100%;">{{ jspPath }}</td>
     </tr>

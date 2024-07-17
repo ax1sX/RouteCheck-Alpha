@@ -4,13 +4,12 @@ import entry.Fact;
 import entry.Settings;
 import entry.StrutsAction;
 import exceptions.ReportingException;
-import factAnalyzer.UnionWebServiceFactAnalyzer;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import project.entry.Project;
-import project.entry.Projects;
+import project.entry.Module;
 import utils.Utils;
 
 import java.io.File;
@@ -22,8 +21,8 @@ public class JsonReportGenerator extends AbstractReportGenerator{
     private static final Logger LOGGER = LoggerFactory.getLogger(JsonReportGenerator.class);
 
     @Override
-    public void initialize(Projects projects, Settings settings) {
-        super.initialize(projects, settings);
+    public void initialize(Project project, Settings settings) {
+        super.initialize(project, settings);
     }
 
     @Override
@@ -42,11 +41,11 @@ public class JsonReportGenerator extends AbstractReportGenerator{
             String prevProjectName = null;
             String extractedName = "";
             // 如果是projects添加根路由，如果是单项目不加根路由
-            Set<Map.Entry<Project, List<Fact>>> projectsChain = this.projects.getAllProjectsAndFactChains();
+            Set<Map.Entry<Module, List<Fact>>> projectsChain = this.project.getAllModulesAndFactChains();
             JSONArray projectsArray = new JSONArray();
 
-            for (Map.Entry<Project, List<Fact>> entry : projectsChain) {
-                List<StrutsAction> actions = this.projects.getActionChain(entry.getKey());
+            for (Map.Entry<Module, List<Fact>> entry : projectsChain) {
+                List<StrutsAction> actions = this.project.getActionChainByModule(entry.getKey());
                 String projectName = entry.getKey().getName();
                 projectsArray.put(projectName);
                 if (projectName != null && projectName.length() > 0){
@@ -63,7 +62,7 @@ public class JsonReportGenerator extends AbstractReportGenerator{
                     }
                 }
 
-                if (this.projects.getProjectCount() == 1){
+                if (this.project.getModuleCount() == 1){
                     extractedName = "";
                 }
 
@@ -136,7 +135,7 @@ public class JsonReportGenerator extends AbstractReportGenerator{
 
             }
 
-            List<String> jspPaths = this.projects.getJSPPaths();
+            List<String> jspPaths = this.project.getJSPPaths();
             if (jspPaths != null && !jspPaths.isEmpty()) {
                 JSONArray jspPathsArray = new JSONArray();
                 for (String path : jspPaths) {

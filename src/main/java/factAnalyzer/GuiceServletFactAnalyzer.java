@@ -37,7 +37,7 @@ public class GuiceServletFactAnalyzer extends AbstractFactAnalyzer {
                     for (SootMethod sm :
                             sootClass.getMethods()) {
                         if (sm.getName().equals("configureServlets")) {
-                            String classFilePath = getProject().getClassesToPath().get(sootClass);
+                            String classFilePath = getModule().getClassBySootClass(sootClass);
                             DeCompilerUtil.deCompile(new String[]{"-dgs=true", classFilePath, tempDirectory});
                             String newPath = classFilePath.substring(classFilePath.lastIndexOf(File.separator) + 1);
                             newPath = tempDirectory + File.separator + newPath;
@@ -89,7 +89,7 @@ public class GuiceServletFactAnalyzer extends AbstractFactAnalyzer {
 
     @Override
     public void prepare(Object object) {
-        Map<String, Jar> jarMap = this.getProject().getJarMap();
+        Map<String, Jar> jarMap = this.getModule().getJarMap();
         SootClass sootClass = (SootClass) object;
         VisibilityAnnotationTag visibilityAnnotationTag = (VisibilityAnnotationTag) sootClass.getTag("VisibilityAnnotationTag");
         if (jarMap.containsKey("guice-servlet") && visibilityAnnotationTag != null) {

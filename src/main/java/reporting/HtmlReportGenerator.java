@@ -5,11 +5,9 @@ import com.google.common.collect.Maps;
 import com.google.common.io.Resources;
 import com.hubspot.jinjava.Jinjava;
 import exceptions.ReportingException;
-import project.entry.Project;
 import entry.Settings;
-import project.entry.Projects;
+import project.entry.Project;
 import utils.Utils;
-import entry.Fact;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +24,7 @@ public class HtmlReportGenerator extends AbstractReportGenerator{
         Date date = new Date();
         DateFormat df = new SimpleDateFormat("yyyy年MM月dd日");
         String dateStr = df.format(date);
-        context.put("projects", this.projects);
+        context.put("project", this.project);
         context.put("date", dateStr);
         String template = Resources.toString(Resources.getResource(TEMPLATE_PATH), Charsets.UTF_8);
         String renderedTemplate = jinjava.render(template, context);
@@ -34,8 +32,8 @@ public class HtmlReportGenerator extends AbstractReportGenerator{
     }
 
     @Override
-    public void initialize(Projects projects, Settings settings) {
-        super.initialize(projects, settings);
+    public void initialize(Project project, Settings settings) {
+        super.initialize(project, settings);
     }
 
     @Override

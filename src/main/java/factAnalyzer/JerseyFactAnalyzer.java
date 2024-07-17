@@ -21,7 +21,7 @@ public class JerseyFactAnalyzer extends JAXRSFactAnalyzer{
 
     @Override
     public void prepare(Object object) {
-        Map<String, Jar> jarMap = this.getProject().getJarMap();
+        Map<String, Jar> jarMap = this.getModule().getJarMap();
         SootClass sootClass = (SootClass) object;
         VisibilityAnnotationTag visibilityAnnotationTag = (VisibilityAnnotationTag) sootClass.getTag("VisibilityAnnotationTag");
         if(jarMap.containsKey("jersey") && visibilityAnnotationTag != null){

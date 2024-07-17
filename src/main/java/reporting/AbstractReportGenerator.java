@@ -4,9 +4,9 @@ import exceptions.ReportingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import project.entry.Project;
+import project.entry.Module;
 import entry.Settings;
 import entry.Fact;
-import project.entry.Projects;
 import utils.Command;
 
 import java.util.Collection;
@@ -16,13 +16,13 @@ public class AbstractReportGenerator implements ReportGenerator{
 
     public Command command;
     public Settings settings;
+    public Module module;
     public Project project;
-    public Projects projects;
     public Collection<Fact> factChain;
 
     @Override
-    public void initialize(Projects projects, Settings settings) {
-        this.projects = projects;
+    public void initialize(Project project, Settings settings) {
+        this.project = project;
         this.settings = settings;
     }
 

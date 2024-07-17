@@ -1,17 +1,24 @@
 package utils;
 
+import org.apache.bcel.classfile.ClassParser;
+import org.apache.bcel.classfile.JavaClass;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.math.BigInteger;
+import java.net.URI;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
-
-import org.apache.bcel.classfile.ClassParser;
-import org.apache.bcel.classfile.JavaClass;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 public class Utils {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Utils.class);
+    public static final ClassLoader FACTANALYZER_CLASSLOADER = new CoreClassLoader(Utils.class.getClassLoader());
 
     public static Command command = null;
     static final public int MAGIC = 0xCAFEBABE;
@@ -111,14 +118,79 @@ public class Utils {
         return "";
     }
 
-    public static List<String> getClassPath(List<String> classFilePaths) {
+    public static List<String> getClassDirs(List<String> classFilePaths) {
         HashSet<String> classDir = new HashSet<>();
         for (String classFilePath:
              classFilePaths) {
-            String className = getFullyQualifiedName(classFilePath);
-            String classNameTemp = className.replace(".", File.separator);
-            classDir.add(classFilePath.substring(0, classFilePath.lastIndexOf(classNameTemp) - 1));
+            classDir.add(getClassDir(classFilePath));
         }
         return new ArrayList<String>(classDir);
+    }
+
+    public static String getClassDir(String classFilePath) {
+        String classDir = "";
+        String className = getFullyQualifiedName(classFilePath);
+        String classNameTemp = className.replace(".", File.separator);
+        classDir = classFilePath.substring(0, classFilePath.lastIndexOf(classNameTemp) - 1);
+        return classDir;
+    }
+
+    public static void scanClass(URI uri, String packageName, Class<?> parentClass, Class<?> annotationClass, ArrayList<Class> destList) throws IOException, ClassNotFoundException {
+        try {
+            String jarFileString;
+            // 项目生成的RouteCheck.jar文件，找到factAnalyzer文件夹路径，扫描FactAnalyzer所有的子类，生成子类列表destList
+            if ((jarFileString = Utils.getJarFileByClass(Utils.class)) != null) {
+                scanClassByJar(new File(jarFileString), packageName, parentClass, annotationClass, destList);
+            } else {
+                File file = new File(uri);
+                File[] file2 = file.listFiles();
+                for (int i = 0; i < file2.length; i++) {
+                    File objectClassFile = file2[i];
+                    if (objectClassFile.getPath().endsWith(".class"))
+                        try {
+                            String objectClassName = String.format("%s.%s", new Object[]{packageName, objectClassFile.getName().substring(0, objectClassFile.getName().length() - ".class".length())});
+                            Class<?> objectClass = Class.forName(objectClassName, true, FACTANALYZER_CLASSLOADER);
+                            if (parentClass.isAssignableFrom(objectClass) && objectClass.isAnnotationPresent((Class) annotationClass)) {
+                                destList.add(objectClass);
+                            }
+                        } catch (Exception e) {
+                            LOGGER.debug(String.format("When scan class %s occur error: %", new Object[]{objectClassFile, e.getMessage()}));
+                        }
+                }
+            }
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    public static void scanClassByJar(File srcJarFile, String packageName, Class<?> parentClass, Class<?> annotationClass, ArrayList<Class> destList) throws IOException, ClassNotFoundException {
+        try {
+            JarFile jarFile = new JarFile(srcJarFile);
+            Enumeration<JarEntry> jarFiles = jarFile.entries();
+            packageName = packageName.replace(".", "/");
+            while (jarFiles.hasMoreElements()) {
+                JarEntry jarEntry = (JarEntry) jarFiles.nextElement();
+                String name = jarEntry.getName();
+                if (name.startsWith(packageName) && name.endsWith(".class")) {
+                    name = name.replace("/", ".");
+                    name = name.substring(0, name.length() - 6);
+                    Class objectClass = Class.forName(name, true, FACTANALYZER_CLASSLOADER);
+                    try {
+                        if (parentClass.isAssignableFrom(objectClass) && objectClass.isAnnotationPresent(annotationClass)) {
+                            destList.add(objectClass);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.debug(String.format("When scan class %s occur error: %", new Object[]{objectClass, e.getMessage()}));
+                    }
+                }
+            }
+            jarFile.close();
+        } catch (Exception ex) {
+            throw ex;
+        }
+    }
+
+    public static String getModulePath(String classDir){
+        return classDir.replace(File.separator + "WEB-INF" + File.separator + "classes", "").replace(File.separator+"target" + File.separator + "classes", "");
     }
 }

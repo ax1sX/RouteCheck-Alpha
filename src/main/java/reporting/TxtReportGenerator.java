@@ -1,16 +1,12 @@
 package reporting;
 
 import entry.Settings;
-import exceptions.ReportingException;
-import project.entry.Projects;
-import utils.Utils;
-
-import java.io.File;
+import project.entry.Project;
 
 public class TxtReportGenerator extends AbstractReportGenerator{
     @Override
-    public void initialize(Projects projects, Settings settings) {
-        super.initialize(projects, settings);
+    public void initialize(Project project, Settings settings) {
+        super.initialize(project, settings);
     }
 
 /*    @Override
