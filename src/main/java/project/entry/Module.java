@@ -13,11 +13,11 @@ public class Module {
 
     private Map<SootClass, String> sootClassAndPathMap;
 
-    private Collection<Config> configs;
+    private List<Config> configs;
 
     private Map<String, Config> configMap = new HashMap<>();
 
-    private Collection<Jar> jars;
+    private List<Jar> jars;
 
     private Map<String, Jar> jarMap = new HashMap<>();
 
@@ -62,15 +62,15 @@ public class Module {
     }
 
 
-    public Collection<Jar> getJars() {
-        return jars.size() > 0 ? jars : new ArrayList<>();
+    public List<Jar> getJars() {
+        return jars.size() > 0 ? jars :  new ArrayList<Jar>();
     }
 
     public void addJar(Jar jar) {
         this.jars.add(jar);
     }
 
-    public void setJars(Collection<Jar> jars) {
+    public void setJars(List<Jar> jars) {
         this.jars = jars;
     }
 
@@ -93,22 +93,22 @@ public class Module {
     }
 
     public String getClassBySootClass(SootClass sootClass){
-        return this.sootClassAndPathMap.getOrDefault(sootClass, "");
+        return this.sootClassAndPathMap.get(sootClass);
     }
 
     public List<SootClass> getAllSootClass(){
         return new ArrayList<SootClass>(this.sootClassAndPathMap.keySet());
     }
 
-    public Collection<Config> getConfigs() {
-        return configs.size() > 0 ? configs : new ArrayList<>();
+    public List<Config> getConfigs() {
+        return configs.size() > 0 ? configs : new ArrayList<Config>();
     }
 
     public void addConfig(Config config) {
         this.configs.add(config);
     }
 
-    public void setConfigs(Collection<Config> configs) {
+    public void setConfigs(List<Config> configs) {
         this.configs = configs;
     }
 
