@@ -112,8 +112,8 @@ public class Utils {
             JavaClass javaClass = parser.parse();
             String className = javaClass.getClassName();
             return className;
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            LOGGER.warn("获取 " + classFilePath + "的FullyQualifiedName出现错误： " + e.getMessage());
         }
         return "";
     }
@@ -129,9 +129,13 @@ public class Utils {
 
     public static String getClassDir(String classFilePath) {
         String classDir = "";
-        String className = getFullyQualifiedName(classFilePath);
-        String classNameTemp = className.replace(".", File.separator);
-        classDir = classFilePath.substring(0, classFilePath.lastIndexOf(classNameTemp) - 1);
+        try{
+            String className = getFullyQualifiedName(classFilePath);
+            String classNameTemp = className.replace(".", File.separator);
+            classDir = classFilePath.substring(0, classFilePath.lastIndexOf(classNameTemp) - 1);
+        }catch (Exception ex){
+
+        }
         return classDir;
     }
 
