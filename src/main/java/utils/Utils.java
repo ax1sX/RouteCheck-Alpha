@@ -191,6 +191,8 @@ public class Utils {
     }
 
     public static String getModulePath(String classDir){
-        return classDir.replace(File.separator + "WEB-INF" + File.separator + "classes", "").replace(File.separator+"target" + File.separator + "classes", "");
+        return classDir.replace(File.separator + "WEB-INF" + File.separator + "classes", "")
+                .replace(File.separator+"target" + File.separator + "classes", "")
+                .replace(File.separator + "classes", "");
     }
 }

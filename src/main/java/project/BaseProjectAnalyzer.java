@@ -37,6 +37,12 @@ public class BaseProjectAnalyzer {
     public void analysis() throws ProjectAnalyzerException {
         String projectPath = this.project.getName();
         scanModuleAndClasses(new File(projectPath));
+        // TODO: 如果没有扫到module，大致说明当前项目中没有class文件，
+        //  业务代码打包在jar中，后续陆续支持对jar的解析
+        if (this.project.getModuleCount() == 0){
+            Module module = new Module(projectPath);
+            this.project.addModule(module);
+        }
     }
 
 
