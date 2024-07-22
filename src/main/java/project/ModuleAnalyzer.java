@@ -68,9 +68,13 @@ public class ModuleAnalyzer {
             Scene.v().setPhantomRefs(true);
             Scene.v().setSootClassPath(sootClassPath);
             Scene.v().loadNecessaryClasses();
-            buildSootClass();
         }catch (Exception e){
             LOGGER.info(e.getMessage());
+        }
+        try{
+            buildSootClass();
+        }catch (Exception E){
+            LOGGER.warn(E.getMessage());
         }
     }
 
@@ -114,13 +118,18 @@ public class ModuleAnalyzer {
 
     private void buildSootClass(){
         for (String classFilePath: this.module.getAllClass()) {
-            String fullyQualifiedName = Utils.getFullyQualifiedName(classFilePath);
-            fullyQualifiedName = fullyQualifiedName.replace(File.separator, ".");
-            Scene.v().addBasicClass(fullyQualifiedName,SIGNATURES);
-            SootClass sootClass = Scene.v().loadClassAndSupport(fullyQualifiedName);
-            if(!sootClass.isJavaLibraryClass()){
-                module.addSootClassAndPath(sootClass, classFilePath);
+            try{
+                String fullyQualifiedName = Utils.getFullyQualifiedName(classFilePath);
+                fullyQualifiedName = fullyQualifiedName.replace(File.separator, ".");
+                Scene.v().addBasicClass(fullyQualifiedName,SIGNATURES);
+                SootClass sootClass = Scene.v().loadClassAndSupport(fullyQualifiedName);
+                if(!sootClass.isJavaLibraryClass()){
+                    module.addSootClassAndPath(sootClass, classFilePath);
+                }
+            }catch (Exception e){
+                LOGGER.warn("加载 " + classFilePath + "时出现错误：" + e.getMessage());
             }
+
         }
     }
 
