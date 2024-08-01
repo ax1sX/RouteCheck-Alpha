@@ -27,15 +27,15 @@ reportType: all
 |  |\  \----.|  `--'  | |  `--'  |     |  |     |  |____ |  `----.|  |  |  | |  |____ |  `----.|  .  \  
 | _| `._____| \______/   \______/      |__|     |_______| \______||__|  |__| |_______| \______||__|\__\ 
                                                                                                         
-usage: java -jar RouteCheck.jar [-cp <arg>] [-h] [-lp <arg>] [-o <arg>] [-pn
-       <arg>] [-pp <arg>] [-sp <arg>]
- -h,--help                  打印命令行帮助信息
- -pp,--module-path <arg>   项目路径
+usage: java -jar RouteCheck.jar [-h] [-pf <arg>] [-pp <arg>]
+ -h,--help                    打印命令行帮助信息
+ -pf,--package-prefix <arg>   项目的包名特征前缀,在解析jar时作为匹配特征
+ -pp,--project-path <arg>     项目路径
 
 ```
 Default Usage
 ```text
- java -jar RouteCheck.jar -pp /Users/axisx/Download/module
+ java -jar RouteCheck.jar -pp /红海ehr/201910161726_RedseaPlatform -pf red.sea
 ```
 
 RouteCheck supports two output formats: HTML and JSON.
