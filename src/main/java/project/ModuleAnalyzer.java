@@ -13,18 +13,16 @@ import utils.Utils;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 import static soot.SootClass.SIGNATURES;
+import static utils.Utils.*;
 
 public class ModuleAnalyzer {
 
     private Module module;
     private static final Logger LOGGER = LoggerFactory.getLogger(ModuleAnalyzer.class);
-
-    private final List<String> CONFIG_SUFFIXES = Arrays.asList("xml", "yaml", "wsdl", "wsdd");
 
     private final String JRE_DIR = System.getProperty("java.home")+ File.separator+
             "lib" + File.separator + "rt.jar";
@@ -40,6 +38,7 @@ public class ModuleAnalyzer {
         File moduleFile = new File(modulePath);
         scanConfig(moduleFile);
         scanJars(moduleFile);
+        scanClassAndConfigFromJar();
         loadSootClass();
     }
 
@@ -78,7 +77,6 @@ public class ModuleAnalyzer {
         }
     }
 
-
     private void scanConfig(File file){
         if (file.isFile()) {
             String fileName = file.getName();
@@ -114,6 +112,19 @@ public class ModuleAnalyzer {
                 scanJars(f);
         }
     }
+
+    private void scanClassAndConfigFromJar(){
+        for (Jar jar:
+             this.module.getJars()) {
+            ArrayList<String> destClass = new ArrayList<>();
+            ArrayList<Config> destConfig = new ArrayList<>();
+            scanClassAndConfigByJarPath(jar.getFilePath(), command.getPackagePrefix(), destClass, destConfig);
+            this.module.addClass(destClass);
+            this.module.addConfig(destConfig);
+            this.module.setConfigMap(destConfig);
+        }
+    }
+
 
 
     private void buildSootClass(){

@@ -7,14 +7,15 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import project.entry.Config;
+import utils.Utils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 @FactAnalyzerAnnotations(
         name = "WSDDFactAnalyzer"
@@ -43,7 +44,7 @@ public class WSDDFactAnalyzer extends SOAPFactAnalyzer{
             String filePath = config.getFilePath();
             // TODO: 解析*.wsdd
             SAXBuilder saxBuilder = new SAXBuilder();
-            InputStream is = new FileInputStream(new File(filePath));
+            InputStream is = Utils.getInputStreamByConfig(config); // 获取config的inputStream统一用这个一个
             Document document = saxBuilder.build(is);
             Element rootElement = document.getRootElement();
             List<Element> children = rootElement.getChildren();

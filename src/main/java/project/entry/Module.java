@@ -61,6 +61,14 @@ public class Module {
         this.configMap.put(key, config);
     }
 
+    public void setConfigMap(ArrayList<Config> configs) {
+        for (Config config:
+             configs) {
+            this.configMap.put(config.getFilePath(), config);
+        }
+
+    }
+
 
     public List<Jar> getJars() {
         return jars.size() > 0 ? jars :  new ArrayList<Jar>();
@@ -82,6 +90,10 @@ public class Module {
 
     public void addClass(String classPath) {
         this.classSet.add(classPath);
+    }
+
+    public void addClass(ArrayList<String> classPaths) {
+        this.classSet.addAll(classPaths);
     }
 
     public List<String> getAllClass() {
@@ -106,6 +118,10 @@ public class Module {
 
     public void addConfig(Config config) {
         this.configs.add(config);
+    }
+
+    public void addConfig(ArrayList<Config> config) {
+        this.configs.addAll(config);
     }
 
     public void setConfigs(List<Config> configs) {

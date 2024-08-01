@@ -9,12 +9,12 @@ import org.jdom.input.SAXBuilder;
 import project.entry.Config;
 import utils.Utils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 //https://www.cnblogs.com/lyh233/p/12047942.html
 @FactAnalyzerAnnotations(
@@ -111,7 +111,7 @@ public class SpringMVCWebXmlFactAnalyzer extends SpringFactAnalyzer {
             // TODO: 解析web.xml获取dispatcher-servlet.xml路径
             SAXBuilder saxBuilder = new SAXBuilder();
             saxBuilder.setEntityResolver(new NoOpEntityResolver());
-            InputStream is = new FileInputStream(new File(filePath));
+            InputStream is = Utils.getInputStreamByConfig(config);
             Document document = saxBuilder.build(is);
             Element rootElement = document.getRootElement();
             List<Element> children = rootElement.getChildren();
@@ -159,7 +159,7 @@ public class SpringMVCWebXmlFactAnalyzer extends SpringFactAnalyzer {
                 // TODO: 判断是否包含<web-app>标签
                 SAXBuilder saxBuilder = new SAXBuilder();
                 saxBuilder.setEntityResolver(new NoOpEntityResolver());
-                InputStream is = new FileInputStream(new File(filePath));
+                InputStream is = Utils.getInputStreamByConfig(config);
                 Document document = saxBuilder.build(is);
                 Element rootElement = document.getRootElement();
                 if(rootElement.getName().equals("web-app")){

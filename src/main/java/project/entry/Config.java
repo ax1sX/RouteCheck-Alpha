@@ -4,11 +4,20 @@ public class Config {
     private String fileName;
     private String filePath;
     private String suffix;
+    private boolean is_jar;
 
     public Config(String fileName, String filePath, String suffix) {
         this.fileName = fileName;
         this.filePath = filePath;
         this.suffix = suffix;
+        this.is_jar = false;
+    }
+
+    public Config(String fileName, String filePath, String suffix, boolean is_jar) {
+        this.fileName = fileName;
+        this.filePath = filePath;
+        this.suffix = suffix;
+        this.is_jar = is_jar;
     }
 
     public String getFileName() {
@@ -34,4 +43,9 @@ public class Config {
     public void setSuffix(String suffix) {
         this.suffix = suffix;
     }
+
+    public boolean is_jar() {
+        return is_jar;
+    }
+
 }

@@ -9,11 +9,11 @@ import org.jdom.input.SAXBuilder;
 import project.entry.Config;
 import utils.Utils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Collection;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 @FactAnalyzerAnnotations(
         name = "Struts2ConfigXmlFactAnalyzer"
@@ -32,7 +32,7 @@ public class StrutsConfigXmlFactAnalyzer extends AbstractFactAnalyzer {
             // TODO: 解析struts-config.xml
             SAXBuilder saxBuilder = new SAXBuilder();
             saxBuilder.setEntityResolver(new NoOpEntityResolver()); // 隐蔽dtd验证
-            InputStream is = new FileInputStream(new File(filePath));
+            InputStream is = Utils.getInputStreamByConfig(config);
             Document document = saxBuilder.build(is);
             Element rootElement = document.getRootElement();
             List<Element> children = rootElement.getChildren();
@@ -91,7 +91,7 @@ public class StrutsConfigXmlFactAnalyzer extends AbstractFactAnalyzer {
                 // TODO: 判断是否包含<struts-config>标签
                 SAXBuilder saxBuilder = new SAXBuilder();
                 saxBuilder.setEntityResolver(new NoOpEntityResolver());
-                InputStream is = new FileInputStream(new File(filePath));
+                InputStream is = Utils.getInputStreamByConfig(config);
                 Document document = saxBuilder.build(is);
                 Element rootElement = document.getRootElement();
                 if(rootElement.getName().equals("struts-config")){

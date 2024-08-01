@@ -4,6 +4,7 @@ import org.apache.bcel.classfile.ClassParser;
 import org.apache.bcel.classfile.JavaClass;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import project.entry.Config;
 
 import java.io.*;
 import java.math.BigInteger;
@@ -14,6 +15,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public class Utils {
 
@@ -22,15 +25,16 @@ public class Utils {
 
     public static Command command = null;
     static final public int MAGIC = 0xCAFEBABE;
+    public static final List<String> CONFIG_SUFFIXES = Arrays.asList("xml", "yaml", "wsdl", "wsdd");
+    public static final List<String> CONFIG_BLACK_LIST = Arrays.asList("pom.xml");
 
-    public static boolean mkDir(String path){
+    public static boolean mkDir(String path) {
         File file = null;
         try {
             file = new File(path);
             if (!file.exists()) {
                 return file.mkdirs();
-            }
-            else{
+            } else {
                 return false;
             }
         } catch (Exception e) {
@@ -50,7 +54,7 @@ public class Utils {
         byte[] digest = null;
         try {
             MessageDigest md5 = MessageDigest.getInstance("md5");
-            digest  = md5.digest(str.getBytes("utf-8"));
+            digest = md5.digest(str.getBytes("utf-8"));
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (UnsupportedEncodingException e) {
@@ -61,7 +65,7 @@ public class Utils {
         return md5Str;
     }
 
-    public static String fileReader(String filePath){
+    public static String fileReader(String filePath) {
         try {
             BufferedReader reader = new BufferedReader(new FileReader(filePath));
             StringBuilder stringBuilder = new StringBuilder();
@@ -76,10 +80,10 @@ public class Utils {
 
             String content = stringBuilder.toString();
             return content;
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
-       return "";
+        return "";
     }
 
     public static Map<?, ?> objectToMap(Object obj) {
@@ -89,14 +93,14 @@ public class Utils {
     }
 
     // 用于获取给定类所在的 JAR 文件路径
-    public static String getJarFileByClass(Class cs){
+    public static String getJarFileByClass(Class cs) {
         String fileString = null;
         if (cs != null) {
             String tempString = cs.getProtectionDomain().getCodeSource().getLocation().getFile();
-            if(tempString.endsWith(".jar")){
-                try{
+            if (tempString.endsWith(".jar")) {
+                try {
                     fileString = URLDecoder.decode(tempString, "utf-8");
-                }catch (UnsupportedEncodingException exception){
+                } catch (UnsupportedEncodingException exception) {
                     fileString = URLDecoder.decode(tempString);
                 }
             }
@@ -105,10 +109,16 @@ public class Utils {
     }
 
 
-
     public static String getFullyQualifiedName(String classFilePath) {
         try {
-            ClassParser parser = new ClassParser(classFilePath);
+            ClassParser parser = null;
+            if (classFilePath.contains("jar!")) {
+                String jarName = classFilePath.split("jar\\!")[0] + "jar";
+                String className = classFilePath.split("jar\\!")[1];
+                parser = new ClassParser(jarName, className);
+            } else {
+                parser = new ClassParser(classFilePath);
+            }
             JavaClass javaClass = parser.parse();
             String className = javaClass.getClassName();
             return className;
@@ -120,8 +130,8 @@ public class Utils {
 
     public static List<String> getClassDirs(List<String> classFilePaths) {
         HashSet<String> classDir = new HashSet<>();
-        for (String classFilePath:
-             classFilePaths) {
+        for (String classFilePath :
+                classFilePaths) {
             classDir.add(getClassDir(classFilePath));
         }
         return new ArrayList<String>(classDir);
@@ -129,11 +139,11 @@ public class Utils {
 
     public static String getClassDir(String classFilePath) {
         String classDir = "";
-        try{
+        try {
             String className = getFullyQualifiedName(classFilePath);
             String classNameTemp = className.replace(".", File.separator);
             classDir = classFilePath.substring(0, classFilePath.lastIndexOf(classNameTemp) - 1);
-        }catch (Exception ex){
+        } catch (Exception ex) {
 
         }
         return classDir;
@@ -158,7 +168,7 @@ public class Utils {
                                 destList.add(objectClass);
                             }
                         } catch (Exception e) {
-                            LOGGER.debug(String.format("When scan class %s occur error: %", new Object[]{objectClassFile, e.getMessage()}));
+                            LOGGER.debug(String.format("When scan class %s occur error: %s", new Object[]{objectClassFile, e.getMessage()}));
                         }
                 }
             }
@@ -184,7 +194,7 @@ public class Utils {
                             destList.add(objectClass);
                         }
                     } catch (Exception e) {
-                        LOGGER.debug(String.format("When scan class %s occur error: %", new Object[]{objectClass, e.getMessage()}));
+                        LOGGER.debug(String.format("When scan class %s occur error: %s", new Object[]{objectClass, e.getMessage()}));
                     }
                 }
             }
@@ -194,9 +204,71 @@ public class Utils {
         }
     }
 
-    public static String getModulePath(String classDir){
+    public static void scanClassAndConfigByJarPath(String srcJarFilePath, String packageName, ArrayList<String> destClass, ArrayList<Config> destConfig) {
+        Utils.scanClassAndConfigByJar(new File(srcJarFilePath), packageName, destClass, destConfig);
+    }
+
+    public static void scanClassAndConfigByJar(File srcJarFile, String packageName, ArrayList<String> destClass, ArrayList<Config> destConfig) {
+        try {
+            JarFile jarFile = new JarFile(srcJarFile);
+            Enumeration<JarEntry> jarFiles = jarFile.entries();
+            packageName = packageName.replace(".", "/");
+            while (jarFiles.hasMoreElements()) {
+                JarEntry jarEntry = (JarEntry) jarFiles.nextElement();
+                String name = jarEntry.getName();
+                String suffix = name.substring(name.lastIndexOf(".") + 1);
+                if (name.startsWith(packageName) && name.endsWith(".class")) {
+                    try {
+                        destClass.add(srcJarFile.getAbsolutePath() + "!" + name);
+                    } catch (Exception e) {
+                        LOGGER.debug(String.format("When scan class %s occur error: %s", new Object[]{name, e.getMessage()}));
+                    }
+                } else if (CONFIG_SUFFIXES.contains(suffix)) {
+                    try {
+                        String[] names = name.split("/");
+                        String fileName = names[names.length -1];
+                        if(!CONFIG_BLACK_LIST.contains(fileName)){
+                            destConfig.add(new Config(name, srcJarFile.getAbsolutePath() + "!" + name, suffix, true));
+
+                        }
+                    } catch (Exception e) {
+                        LOGGER.debug(String.format("When scan config %s occur error: %s", new Object[]{name, e.getMessage()}));
+                    }
+                }
+            }
+            jarFile.close();
+        } catch (Exception ex) {
+            LOGGER.debug(String.format("When scan jar %s occur error: %s", new Object[]{srcJarFile.getAbsoluteFile().getName(), ex.getMessage()}));
+
+        }
+    }
+
+    public static InputStream getInputStreamByConfig(Config config) {
+        InputStream is = null;
+        try {
+            if (config.is_jar()) {
+                String zipFile = config.getFilePath().split("!")[0];
+                String fileName = config.getFilePath().split("!")[1];
+                ZipFile zip = null;
+
+                zip = new ZipFile(zipFile);
+                ZipEntry entry = zip.getEntry(fileName);
+                is = new DataInputStream(new BufferedInputStream(zip.getInputStream(entry), 8192));
+
+            } else {
+                is = new FileInputStream(new File(config.getFilePath()));
+            }
+        } catch (IOException e) {
+            LOGGER.debug("");
+        }
+
+        return is;
+
+    }
+
+    public static String getModulePath(String classDir) {
         return classDir.replace(File.separator + "WEB-INF" + File.separator + "classes", "")
-                .replace(File.separator+"target" + File.separator + "classes", "")
+                .replace(File.separator + "target" + File.separator + "classes", "")
                 .replace(File.separator + "classes", "");
     }
 }
